@@ -1,1075 +1,2100 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Learn Macedonian Cyrillic</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    :root {
-      --bg: #0f1419;
-      --card-bg: #1a2332;
-      --card-hover: #243447;
-      --accent: #f59e0b;
-      --accent-soft: rgba(245, 158, 11, 0.15);
-      --text: #e8eaed;
-      --text-muted: #8899a6;
-      --success: #10b981;
-      --error: #ef4444;
-      --group1: #3b82f6;
-      --group2: #f59e0b;
-      --group3: #10b981;
-      --group4: #8b5cf6;
-      --group5: #ef4444;
-    }
-    
-    body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 20px;
-      padding-bottom: 100px;
-    }
-    
-    .container { max-width: 600px; margin: 0 auto; }
-    
-    header { text-align: center; margin-bottom: 30px; }
-    
-    h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, var(--accent), #fbbf24);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .subtitle { color: var(--text-muted); font-size: 0.95rem; }
-    
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    .tab {
-      padding: 10px 18px;
-      background: var(--card-bg);
-      border: none;
-      border-radius: 20px;
-      color: var(--text-muted);
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    
-    .tab:hover { background: var(--card-hover); }
-    .tab.active { background: var(--accent); color: var(--bg); font-weight: 600; }
-    
-    .groups {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-    
-    .group-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 2px solid transparent;
-    }
-    
-    .group-card:hover { transform: translateY(-2px); background: var(--card-hover); }
-    .group-card.selected { border-color: var(--accent); }
-    .group-card h3 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .group-card .letters { font-size: 1.4rem; font-weight: 600; letter-spacing: 2px; margin-bottom: 8px; }
-    .group-card .count { font-size: 0.8rem; color: var(--text-muted); }
-    
-    .group-card[data-group="1"] { border-left: 4px solid var(--group1); }
-    .group-card[data-group="2"] { border-left: 4px solid var(--group2); }
-    .group-card[data-group="3"] { border-left: 4px solid var(--group3); }
-    .group-card[data-group="4"] { border-left: 4px solid var(--group4); }
-    .group-card[data-group="5"] { border-left: 4px solid var(--group5); }
-    
-    .flashcard-container { perspective: 1000px; margin-bottom: 24px; }
-    
-    .flashcard {
-      width: 100%;
-      height: 320px;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.5s;
-      cursor: pointer;
-    }
-    
-    .flashcard.flipped { transform: rotateY(180deg); }
-    
-    .flashcard-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    
-    .flashcard-front {
-      background: linear-gradient(145deg, var(--card-bg), #1e2d3d);
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    
-    .flashcard-back {
-      background: linear-gradient(145deg, #1e2d3d, var(--card-bg));
-      border: 1px solid rgba(255,255,255,0.05);
-      transform: rotateY(180deg);
-    }
-    
-    .flashcard-group-badge {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    
-    .flashcard-letter { font-size: 7rem; font-weight: 700; margin-bottom: 8px; text-shadow: 0 4px 20px rgba(245, 158, 11, 0.3); }
-    .flashcard-lowercase { font-size: 3rem; color: var(--text-muted); margin-bottom: 12px; }
-    .flashcard-hint { color: var(--text-muted); font-size: 0.9rem; }
-    .flashcard-sound { font-size: 3rem; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
-    .flashcard-example { color: var(--text-muted); font-size: 1rem; text-align: center; margin-bottom: 12px; }
-    
-    .flashcard-trick {
-      padding: 10px 16px;
-      background: var(--accent-soft);
-      border-radius: 12px;
-      font-size: 0.85rem;
-      color: var(--accent);
-      text-align: center;
-      max-width: 90%;
-    }
-    
-    .flashcard-word-example {
-      margin-top: 10px;
-      padding: 8px 14px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-      text-align: center;
-    }
-    
-    .flashcard-word-example .cyrillic { font-size: 1.2rem; font-weight: 600; }
-    .flashcard-word-example .meaning { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-    
-    .controls { display: flex; gap: 12px; justify-content: center; margin-bottom: 24px; }
-    
-    .btn {
-      padding: 14px 28px;
-      border: none;
-      border-radius: 12px;
-      font-family: inherit;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary { background: var(--accent); color: var(--bg); }
-    .btn-primary:hover { background: #fbbf24; transform: translateY(-2px); }
-    .btn-secondary { background: var(--card-bg); color: var(--text); }
-    .btn-secondary:hover { background: var(--card-hover); }
-    .btn-small { padding: 8px 16px; font-size: 0.85rem; }
-    
-    .progress-bar { height: 6px; background: var(--card-bg); border-radius: 3px; margin-bottom: 16px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #fbbf24); border-radius: 3px; transition: width 0.3s; }
-    .progress-text { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
-    
-    .quiz-question { text-align: center; margin-bottom: 24px; }
-    .quiz-letter { font-size: 5rem; font-weight: 700; margin-bottom: 16px; }
-    .quiz-prompt { color: var(--text-muted); font-size: 1.1rem; }
-    
-    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-    
-    .quiz-option {
-      padding: 20px;
-      background: var(--card-bg);
-      border: 2px solid transparent;
-      border-radius: 16px;
-      font-family: inherit;
-      font-size: 1.1rem;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .quiz-option:hover { background: var(--card-hover); border-color: var(--accent); }
-    .quiz-option.correct { background: rgba(16, 185, 129, 0.2); border-color: var(--success); }
-    .quiz-option.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--error); }
-    .quiz-option:disabled { cursor: default; }
-    
-    .score-display { text-align: center; padding: 24px; background: var(--card-bg); border-radius: 16px; margin-bottom: 24px; }
-    .score-number { font-size: 3rem; font-weight: 700; color: var(--accent); }
-    .score-label { color: var(--text-muted); }
-    
-    .hidden { display: none !important; }
-    
-    .practice-words { background: var(--card-bg); border-radius: 16px; padding: 24px; margin-top: 24px; }
-    .practice-words h3 { font-size: 1rem; margin-bottom: 16px; color: var(--accent); }
-    .word-list { display: flex; flex-direction: column; gap: 12px; }
-    
-    .word-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 10px;
-    }
-    
-    .word-cyrillic { font-size: 1.3rem; font-weight: 600; letter-spacing: 1px; }
-    .word-info { text-align: right; }
-    .word-latin { font-size: 0.9rem; color: var(--text-muted); }
-    .word-meaning { font-size: 0.85rem; color: var(--accent); }
-    
-    .reference-table { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
-    .reference-table h3 { font-size: 1rem; margin-bottom: 16px; color: var(--accent); }
-    .letter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
-    
-    .letter-cell {
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .letter-cell:hover { background: rgba(255,255,255,0.08); transform: scale(1.05); }
-    .letter-cell .cyrillic { font-size: 1.4rem; font-weight: 600; }
-    .letter-cell .sound { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-    
-    .vocab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-    .vocab-header h2 { font-size: 1.3rem; color: var(--accent); }
-    .vocab-stats { color: var(--text-muted); font-size: 0.9rem; }
-    
-    .category-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    .category-tab {
-      padding: 8px 16px;
-      background: var(--card-bg);
-      border: none;
-      border-radius: 16px;
-      color: var(--text-muted);
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    
-    .category-tab:hover { background: var(--card-hover); }
-    .category-tab.active { background: var(--accent); color: var(--bg); font-weight: 600; }
-    
-    .vocab-grid { display: grid; gap: 10px; }
-    
-    .vocab-card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1px solid transparent;
-    }
-    
-    .vocab-card:hover { background: var(--card-hover); border-color: rgba(245, 158, 11, 0.3); }
-    .vocab-left { display: flex; flex-direction: column; gap: 4px; }
-    .vocab-macedonian { font-size: 1.4rem; font-weight: 600; }
-    .vocab-latin { font-size: 0.85rem; color: var(--text-muted); }
-    .vocab-answer { font-size: 1.1rem; color: var(--accent); opacity: 0; transition: opacity 0.3s; text-align: right; }
-    .vocab-card.revealed .vocab-answer { opacity: 1; }
-    
-    .search-box {
-      width: 100%;
-      padding: 14px 20px;
-      background: var(--card-bg);
-      border: 2px solid transparent;
-      border-radius: 12px;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 1rem;
-      margin-bottom: 20px;
-      transition: all 0.2s;
-    }
-    
-    .search-box:focus { outline: none; border-color: var(--accent); }
-    .search-box::placeholder { color: var(--text-muted); }
-    
-    .toggle-row { display: flex; gap: 8px; margin-bottom: 16px; }
-    
-    .toggle-btn {
-      flex: 1;
-      padding: 10px;
-      background: var(--card-bg);
-      border: 2px solid transparent;
-      border-radius: 10px;
-      color: var(--text-muted);
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .toggle-btn.active { border-color: var(--accent); color: var(--accent); }
-    
-    .vocab-quiz-card {
-      background: var(--card-bg);
-      border-radius: 20px;
-      padding: 32px;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    
-    .vocab-quiz-word { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
-    .vocab-quiz-latin { color: var(--text-muted); font-size: 1rem; margin-bottom: 24px; }
-    .vocab-quiz-prompt { color: var(--text-muted); margin-bottom: 20px; }
-    
-    .vocab-input {
-      width: 100%;
-      padding: 16px 20px;
-      background: rgba(255,255,255,0.05);
-      border: 2px solid transparent;
-      border-radius: 12px;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 1.1rem;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-    
-    .vocab-input:focus { outline: none; border-color: var(--accent); }
-    .vocab-input.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.1); }
-    .vocab-input.wrong { border-color: var(--error); background: rgba(239, 68, 68, 0.1); }
-    
-    .vocab-feedback { padding: 12px; border-radius: 10px; margin-bottom: 16px; font-weight: 600; }
-    .vocab-feedback.correct { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-    .vocab-feedback.wrong { background: rgba(239, 68, 68, 0.15); color: var(--error); }
-    
-    .info-text { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; text-align: center; }
-    
-    .speak-btn {
-      background: var(--accent-soft);
-      border: none;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 1.3rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .speak-btn:hover {
-      background: var(--accent);
-      transform: scale(1.1);
-    }
-    
-    .speak-btn:active {
-      transform: scale(0.95);
-    }
-    
-    .speak-btn.speaking {
-      animation: pulse 0.5s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-    }
-    
-    .flashcard-speak {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-    }
-    
-    .vocab-card {
-      grid-template-columns: auto 1fr auto;
-    }
-    
-    .vocab-speak {
-      width: 36px;
-      height: 36px;
-      font-size: 1rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Македонска Азбука</h1>
-      <p class="subtitle">Learn Macedonian Cyrillic step by step</p>
-    </header>
-    
-    <div class="tabs">
-      <button class="tab active" data-view="learn">📚 Learn</button>
-      <button class="tab" data-view="flashcards">🎴 Flashcards</button>
-      <button class="tab" data-view="quiz">✅ Quiz</button>
-      <button class="tab" data-view="vocab">📝 Vocabulary</button>
-      <button class="tab" data-view="reference">📋 Reference</button>
-    </div>
-    
-    <!-- LEARN VIEW -->
-    <div id="learn-view">
-      <div class="groups">
-        <div class="group-card selected" data-group="1">
-          <h3>Group 1</h3>
-          <div class="letters">А Е К М О Т</div>
-          <div class="count">6 letters • Already know these!</div>
-        </div>
-        <div class="group-card" data-group="2">
-          <h3>Group 2</h3>
-          <div class="letters">В Н Р С У Х Ј</div>
-          <div class="count">7 letters • False friends</div>
-        </div>
-        <div class="group-card" data-group="3">
-          <h3>Group 3</h3>
-          <div class="letters">Б Г Д З И Л П Ф Ш</div>
-          <div class="count">9 letters • New but easy</div>
-        </div>
-        <div class="group-card" data-group="4">
-          <h3>Group 4</h3>
-          <div class="letters">Ж Ц Ч Џ Ѕ</div>
-          <div class="count">5 letters • Combo sounds</div>
-        </div>
-        <div class="group-card" data-group="5">
-          <h3>Group 5</h3>
-          <div class="letters">Ѓ Ќ Љ Њ</div>
-          <div class="count">4 letters • Unique to Macedonian</div>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learn Macedonian Cyrillic</title>
+    <link rel="icon" type="image/png" href="macedonia_640.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #0f1419;
+        --card-bg: #1a2332;
+        --card-hover: #243447;
+        --accent: #f59e0b;
+        --accent-soft: rgba(245, 158, 11, 0.15);
+        --text: #e8eaed;
+        --text-muted: #8899a6;
+        --success: #10b981;
+        --error: #ef4444;
+        --group1: #3b82f6;
+        --group2: #f59e0b;
+        --group3: #10b981;
+        --group4: #8b5cf6;
+        --group5: #ef4444;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 20px;
+        padding-bottom: 100px;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, var(--accent), #fbbf24);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .tab {
+        padding: 10px 18px;
+        background: var(--card-bg);
+        border: none;
+        border-radius: 20px;
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .tab:hover {
+        background: var(--card-hover);
+      }
+      .tab.active {
+        background: var(--accent);
+        color: var(--bg);
+        font-weight: 600;
+      }
+
+      .groups {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .group-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+      }
+
+      .group-card:hover {
+        transform: translateY(-2px);
+        background: var(--card-hover);
+      }
+      .group-card.selected {
+        border-color: var(--accent);
+      }
+      .group-card h3 {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .group-card .letters {
+        font-size: 1.4rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+      }
+      .group-card .count {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .group-card[data-group="1"] {
+        border-left: 4px solid var(--group1);
+      }
+      .group-card[data-group="2"] {
+        border-left: 4px solid var(--group2);
+      }
+      .group-card[data-group="3"] {
+        border-left: 4px solid var(--group3);
+      }
+      .group-card[data-group="4"] {
+        border-left: 4px solid var(--group4);
+      }
+      .group-card[data-group="5"] {
+        border-left: 4px solid var(--group5);
+      }
+
+      .flashcard-container {
+        perspective: 1000px;
+        margin-bottom: 24px;
+      }
+
+      .flashcard {
+        width: 100%;
+        height: 320px;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.5s;
+        cursor: pointer;
+      }
+
+      .flashcard.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .flashcard-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .flashcard-front {
+        background: linear-gradient(145deg, var(--card-bg), #1e2d3d);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .flashcard-back {
+        background: linear-gradient(145deg, #1e2d3d, var(--card-bg));
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transform: rotateY(180deg);
+      }
+
+      .flashcard-group-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .flashcard-letter {
+        font-size: 7rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        text-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+      }
+      .flashcard-lowercase {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+      }
+      .flashcard-hint {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .flashcard-sound {
+        font-size: 3rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 12px;
+      }
+      .flashcard-example {
+        color: var(--text-muted);
+        font-size: 1rem;
+        text-align: center;
+        margin-bottom: 12px;
+      }
+
+      .flashcard-trick {
+        padding: 10px 16px;
+        background: var(--accent-soft);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        color: var(--accent);
+        text-align: center;
+        max-width: 90%;
+      }
+
+      .flashcard-word-example {
+        margin-top: 10px;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .flashcard-word-example .cyrillic {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .flashcard-word-example .meaning {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-bottom: 24px;
+      }
+
+      .btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .btn-primary:hover {
+        background: #fbbf24;
+        transform: translateY(-2px);
+      }
+      .btn-secondary {
+        background: var(--card-bg);
+        color: var(--text);
+      }
+      .btn-secondary:hover {
+        background: var(--card-hover);
+      }
+      .btn-small {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+      }
+
+      .progress-bar {
+        height: 6px;
+        background: var(--card-bg);
+        border-radius: 3px;
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #fbbf24);
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
+      .progress-text {
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+      }
+
+      .quiz-question {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      .quiz-letter {
+        font-size: 5rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      .quiz-prompt {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+      }
+
+      .quiz-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .quiz-option {
+        padding: 20px;
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        border-radius: 16px;
+        font-family: inherit;
+        font-size: 1.1rem;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .quiz-option:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+      }
+      .quiz-option.correct {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: var(--success);
+      }
+      .quiz-option.wrong {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: var(--error);
+      }
+      .quiz-option:disabled {
+        cursor: default;
+      }
+
+      .score-display {
+        text-align: center;
+        padding: 24px;
+        background: var(--card-bg);
+        border-radius: 16px;
+        margin-bottom: 24px;
+      }
+      .score-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .score-label {
+        color: var(--text-muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .practice-words {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 24px;
+      }
+      .practice-words h3 {
+        font-size: 1rem;
+        margin-bottom: 16px;
+        color: var(--accent);
+      }
+      .word-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .word-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+      }
+
+      .word-cyrillic {
+        font-size: 1.3rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      .word-info {
+        text-align: right;
+      }
+      .word-latin {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+      .word-meaning {
+        font-size: 0.85rem;
+        color: var(--accent);
+      }
+
+      .reference-table {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+      .reference-table h3 {
+        font-size: 1rem;
+        margin-bottom: 16px;
+        color: var(--accent);
+      }
+      .letter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+      }
+
+      .letter-cell {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .letter-cell:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: scale(1.05);
+      }
+      .letter-cell .cyrillic {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      .letter-cell .sound {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+
+      .vocab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .vocab-header h2 {
+        font-size: 1.3rem;
+        color: var(--accent);
+      }
+      .vocab-stats {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .category-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .category-tab {
+        padding: 8px 16px;
+        background: var(--card-bg);
+        border: none;
+        border-radius: 16px;
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .category-tab:hover {
+        background: var(--card-hover);
+      }
+      .category-tab.active {
+        background: var(--accent);
+        color: var(--bg);
+        font-weight: 600;
+      }
+
+      .vocab-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .vocab-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+      }
+
+      .vocab-card:hover {
+        background: var(--card-hover);
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+      .vocab-left {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vocab-macedonian {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      .vocab-latin {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .vocab-answer {
+        font-size: 1.1rem;
+        color: var(--accent);
+        opacity: 0;
+        transition: opacity 0.3s;
+        text-align: right;
+      }
+      .vocab-card.revealed .vocab-answer {
+        opacity: 1;
+      }
+
+      .search-box {
+        width: 100%;
+        padding: 14px 20px;
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        transition: all 0.2s;
+      }
+
+      .search-box:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .search-box::placeholder {
+        color: var(--text-muted);
+      }
+
+      .toggle-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .toggle-btn {
+        flex: 1;
+        padding: 10px;
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        border-radius: 10px;
+        color: var(--text-muted);
+        font-family: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .toggle-btn.active {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .vocab-quiz-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 32px;
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .vocab-quiz-word {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .vocab-quiz-latin {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-bottom: 24px;
+      }
+      .vocab-quiz-prompt {
+        color: var(--text-muted);
+        margin-bottom: 20px;
+      }
+
+      .vocab-input {
+        width: 100%;
+        padding: 16px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 1.1rem;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      .vocab-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .vocab-input.correct {
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.1);
+      }
+      .vocab-input.wrong {
+        border-color: var(--error);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .vocab-feedback {
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+      .vocab-feedback.correct {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+      }
+      .vocab-feedback.wrong {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--error);
+      }
+
+      .info-text {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        text-align: center;
+      }
+
+      .speak-btn {
+        background: var(--accent-soft);
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .speak-btn:hover {
+        background: var(--accent);
+        transform: scale(1.1);
+      }
+
+      .speak-btn:active {
+        transform: scale(0.95);
+      }
+
+      .speak-btn.speaking {
+        animation: pulse 0.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.15);
+        }
+      }
+
+      .flashcard-speak {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+      }
+
+      .vocab-card {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .vocab-speak {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Македонска Азбука</h1>
+        <p class="subtitle">Learn Macedonian Cyrillic step by step</p>
+      </header>
+
+      <div class="tabs">
+        <button class="tab active" data-view="learn">📚 Learn</button>
+        <button class="tab" data-view="flashcards">🎴 Flashcards</button>
+        <button class="tab" data-view="quiz">✅ Quiz</button>
+        <button class="tab" data-view="vocab">📝 Vocabulary</button>
+        <button class="tab" data-view="reference">📋 Reference</button>
       </div>
-      
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width: 0%"></div></div>
-      <div class="progress-text" id="progress-text">Card 1 of 6</div>
-      
-      <div class="flashcard-container">
-        <div class="flashcard" id="flashcard">
-          <div class="flashcard-face flashcard-front">
-            <div class="flashcard-group-badge" id="card-badge">Group 1</div>
-            <button class="speak-btn flashcard-speak" id="card-speak" onclick="event.stopPropagation(); speakMacedonian(document.getElementById('card-letter').textContent)">🔊</button>
-            <div class="flashcard-letter" id="card-letter">А</div>
-            <div class="flashcard-lowercase" id="card-lowercase">а</div>
-            <div class="flashcard-hint">Tap to reveal sound</div>
+
+      <!-- LEARN VIEW -->
+      <div id="learn-view">
+        <div class="groups">
+          <div class="group-card selected" data-group="1">
+            <h3>Group 1</h3>
+            <div class="letters">А Е К М О Т</div>
+            <div class="count">6 letters • Already know these!</div>
           </div>
-          <div class="flashcard-face flashcard-back">
-            <button class="speak-btn flashcard-speak" id="card-speak-word" onclick="event.stopPropagation(); speakWord(currentGroup, currentCard)">🔊</button>
-            <div class="flashcard-sound" id="card-sound">"a"</div>
-            <div class="flashcard-example" id="card-example">Like 'a' in 'father'</div>
-            <div class="flashcard-trick" id="card-trick"></div>
-            <div class="flashcard-word-example" id="card-word-example">
-              <div class="cyrillic">МАМА</div>
-              <div class="meaning">mama = mom</div>
+          <div class="group-card" data-group="2">
+            <h3>Group 2</h3>
+            <div class="letters">В Н Р С У Х Ј</div>
+            <div class="count">7 letters • False friends</div>
+          </div>
+          <div class="group-card" data-group="3">
+            <h3>Group 3</h3>
+            <div class="letters">Б Г Д З И Л П Ф Ш</div>
+            <div class="count">9 letters • New but easy</div>
+          </div>
+          <div class="group-card" data-group="4">
+            <h3>Group 4</h3>
+            <div class="letters">Ж Ц Ч Џ Ѕ</div>
+            <div class="count">5 letters • Combo sounds</div>
+          </div>
+          <div class="group-card" data-group="5">
+            <h3>Group 5</h3>
+            <div class="letters">Ѓ Ќ Љ Њ</div>
+            <div class="count">4 letters • Unique to Macedonian</div>
+          </div>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Card 1 of 6</div>
+
+        <div class="flashcard-container">
+          <div class="flashcard" id="flashcard">
+            <div class="flashcard-face flashcard-front">
+              <div class="flashcard-group-badge" id="card-badge">Group 1</div>
+              <button
+                class="speak-btn flashcard-speak"
+                id="card-speak"
+                onclick="event.stopPropagation(); speakMacedonian(document.getElementById('card-letter').textContent)"
+              >
+                🔊
+              </button>
+              <div class="flashcard-letter" id="card-letter">А</div>
+              <div class="flashcard-lowercase" id="card-lowercase">а</div>
+              <div class="flashcard-hint">Tap to reveal sound</div>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <button
+                class="speak-btn flashcard-speak"
+                id="card-speak-word"
+                onclick="event.stopPropagation(); speakWord(currentGroup, currentCard)"
+              >
+                🔊
+              </button>
+              <div class="flashcard-sound" id="card-sound">"a"</div>
+              <div class="flashcard-example" id="card-example">
+                Like 'a' in 'father'
+              </div>
+              <div class="flashcard-trick" id="card-trick"></div>
+              <div class="flashcard-word-example" id="card-word-example">
+                <div class="cyrillic">МАМА</div>
+                <div class="meaning">mama = mom</div>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="controls">
+          <button class="btn btn-secondary" id="prev-btn">← Previous</button>
+          <button class="btn btn-primary" id="next-btn">Next →</button>
+        </div>
+
+        <div class="practice-words" id="practice-words">
+          <h3>🎯 Practice reading these words:</h3>
+          <div class="word-list" id="word-list"></div>
+        </div>
       </div>
-      
-      <div class="controls">
-        <button class="btn btn-secondary" id="prev-btn">← Previous</button>
-        <button class="btn btn-primary" id="next-btn">Next →</button>
-      </div>
-      
-      <div class="practice-words" id="practice-words">
-        <h3>🎯 Practice reading these words:</h3>
-        <div class="word-list" id="word-list"></div>
-      </div>
-    </div>
-    
-    <!-- FLASHCARDS VIEW -->
-    <div id="flashcards-view" class="hidden">
-      <div class="vocab-header">
-        <h2>🎴 All 31 Letters</h2>
-        <span class="vocab-stats" id="flashcard-counter">1 / 31</span>
-      </div>
-      
-      <div class="toggle-row">
-        <button class="toggle-btn active" id="fc-shuffle-off">In Order</button>
-        <button class="toggle-btn" id="fc-shuffle-on">Shuffle</button>
-      </div>
-      
-      <div class="flashcard-container">
-        <div class="flashcard" id="flashcard-all">
-          <div class="flashcard-face flashcard-front">
-            <div class="flashcard-group-badge" id="fc-badge">Group 1</div>
-            <button class="speak-btn flashcard-speak" onclick="event.stopPropagation(); speakMacedonian(document.getElementById('fc-letter').textContent)">🔊</button>
-            <div class="flashcard-letter" id="fc-letter">А</div>
-            <div class="flashcard-lowercase" id="fc-lowercase">а</div>
-            <div class="flashcard-hint">Tap to flip</div>
-          </div>
-          <div class="flashcard-face flashcard-back">
-            <button class="speak-btn flashcard-speak" onclick="event.stopPropagation(); speakMacedonian(allLetters[fcIndex].word)">🔊</button>
-            <div class="flashcard-sound" id="fc-sound">"a"</div>
-            <div class="flashcard-example" id="fc-example">Like 'a' in 'father'</div>
-            <div class="flashcard-trick" id="fc-trick"></div>
-            <div class="flashcard-word-example" id="fc-word-example">
-              <div class="cyrillic">МАМА</div>
-              <div class="meaning">mama = mom</div>
+
+      <!-- FLASHCARDS VIEW -->
+      <div id="flashcards-view" class="hidden">
+        <div class="vocab-header">
+          <h2>🎴 All 31 Letters</h2>
+          <span class="vocab-stats" id="flashcard-counter">1 / 31</span>
+        </div>
+
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="fc-shuffle-off">
+            In Order
+          </button>
+          <button class="toggle-btn" id="fc-shuffle-on">Shuffle</button>
+        </div>
+
+        <div class="flashcard-container">
+          <div class="flashcard" id="flashcard-all">
+            <div class="flashcard-face flashcard-front">
+              <div class="flashcard-group-badge" id="fc-badge">Group 1</div>
+              <button
+                class="speak-btn flashcard-speak"
+                onclick="event.stopPropagation(); speakMacedonian(document.getElementById('fc-letter').textContent)"
+              >
+                🔊
+              </button>
+              <div class="flashcard-letter" id="fc-letter">А</div>
+              <div class="flashcard-lowercase" id="fc-lowercase">а</div>
+              <div class="flashcard-hint">Tap to flip</div>
+            </div>
+            <div class="flashcard-face flashcard-back">
+              <button
+                class="speak-btn flashcard-speak"
+                onclick="event.stopPropagation(); speakMacedonian(allLetters[fcIndex].word)"
+              >
+                🔊
+              </button>
+              <div class="flashcard-sound" id="fc-sound">"a"</div>
+              <div class="flashcard-example" id="fc-example">
+                Like 'a' in 'father'
+              </div>
+              <div class="flashcard-trick" id="fc-trick"></div>
+              <div class="flashcard-word-example" id="fc-word-example">
+                <div class="cyrillic">МАМА</div>
+                <div class="meaning">mama = mom</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div class="controls">
-        <button class="btn btn-secondary" id="fc-prev-btn">← Previous</button>
-        <button class="btn btn-primary" id="fc-next-btn">Next →</button>
-      </div>
-      <div class="controls">
-        <button class="btn btn-secondary btn-small" id="fc-restart-btn">🔄 Restart</button>
-      </div>
-    </div>
-    
-    <!-- QUIZ VIEW -->
-    <div id="quiz-view" class="hidden">
-      <div class="groups">
-        <div class="group-card selected" data-group="1" data-quiz="true">
-          <h3>Group 1</h3>
-          <div class="letters">А Е К М О Т</div>
-          <div class="count">Familiar letters</div>
+
+        <div class="controls">
+          <button class="btn btn-secondary" id="fc-prev-btn">← Previous</button>
+          <button class="btn btn-primary" id="fc-next-btn">Next →</button>
         </div>
-        <div class="group-card" data-group="2" data-quiz="true">
-          <h3>Group 2</h3>
-          <div class="letters">В Н Р С У Х Ј</div>
-          <div class="count">False friends</div>
-        </div>
-        <div class="group-card" data-group="3" data-quiz="true">
-          <h3>Group 3</h3>
-          <div class="letters">Б Г Д З И Л П Ф Ш</div>
-          <div class="count">New letters</div>
-        </div>
-        <div class="group-card" data-group="4" data-quiz="true">
-          <h3>Group 4</h3>
-          <div class="letters">Ж Ц Ч Џ Ѕ</div>
-          <div class="count">Combo sounds</div>
-        </div>
-        <div class="group-card" data-group="5" data-quiz="true">
-          <h3>Group 5</h3>
-          <div class="letters">Ѓ Ќ Љ Њ</div>
-          <div class="count">Unique letters</div>
-        </div>
-        <div class="group-card" data-group="all" data-quiz="true">
-          <h3>All Groups</h3>
-          <div class="letters">А — Ш</div>
-          <div class="count">All 31 letters</div>
+        <div class="controls">
+          <button class="btn btn-secondary btn-small" id="fc-restart-btn">
+            🔄 Restart
+          </button>
         </div>
       </div>
-      
-      <div class="score-display">
-        <div class="score-number" id="score">0/0</div>
-        <div class="score-label">Correct answers</div>
-      </div>
-      
-      <div class="quiz-question">
-        <div class="quiz-letter" id="quiz-letter">А</div>
-        <div class="quiz-prompt">What sound does this letter make?</div>
-      </div>
-      
-      <div class="quiz-options" id="quiz-options"></div>
-      
-      <div class="controls">
-        <button class="btn btn-primary" id="next-quiz-btn">Next Question →</button>
-      </div>
-    </div>
-    
-    <!-- VOCABULARY VIEW -->
-    <div id="vocab-view" class="hidden">
-      <div class="vocab-header">
-        <h2>📝 Essential Vocabulary</h2>
-        <span class="vocab-stats" id="vocab-count">100+ words</span>
-      </div>
-      
-      <input type="text" class="search-box" id="vocab-search" placeholder="🔍 Search words in English or Macedonian...">
-      
-      <div class="category-tabs" id="category-tabs">
-        <button class="category-tab active" data-category="all">All</button>
-        <button class="category-tab" data-category="animals">🐾 Animals</button>
-        <button class="category-tab" data-category="food">🍎 Food</button>
-        <button class="category-tab" data-category="drinks">🥤 Drinks</button>
-        <button class="category-tab" data-category="family">👨‍👩‍👧 Family</button>
-        <button class="category-tab" data-category="body">🦶 Body</button>
-        <button class="category-tab" data-category="home">🏠 Home</button>
-        <button class="category-tab" data-category="nature">🌳 Nature</button>
-        <button class="category-tab" data-category="colors">🎨 Colors</button>
-        <button class="category-tab" data-category="numbers">🔢 Numbers</button>
-        <button class="category-tab" data-category="phrases">🗣️ Phrases</button>
-        <button class="category-tab" data-category="common">💬 Common</button>
-      </div>
-      
-      <div class="toggle-row">
-        <button class="toggle-btn active" id="vocab-browse">Browse</button>
-        <button class="toggle-btn" id="vocab-quiz-mode">Quiz Mode</button>
-      </div>
-      
-      <div id="vocab-browse-container">
-        <p class="info-text">Tap a word to reveal its meaning</p>
-        <div class="vocab-grid" id="vocab-grid"></div>
-      </div>
-      
-      <div id="vocab-quiz-container" class="hidden">
+
+      <!-- QUIZ VIEW -->
+      <div id="quiz-view" class="hidden">
+        <div class="groups">
+          <div class="group-card selected" data-group="1" data-quiz="true">
+            <h3>Group 1</h3>
+            <div class="letters">А Е К М О Т</div>
+            <div class="count">Familiar letters</div>
+          </div>
+          <div class="group-card" data-group="2" data-quiz="true">
+            <h3>Group 2</h3>
+            <div class="letters">В Н Р С У Х Ј</div>
+            <div class="count">False friends</div>
+          </div>
+          <div class="group-card" data-group="3" data-quiz="true">
+            <h3>Group 3</h3>
+            <div class="letters">Б Г Д З И Л П Ф Ш</div>
+            <div class="count">New letters</div>
+          </div>
+          <div class="group-card" data-group="4" data-quiz="true">
+            <h3>Group 4</h3>
+            <div class="letters">Ж Ц Ч Џ Ѕ</div>
+            <div class="count">Combo sounds</div>
+          </div>
+          <div class="group-card" data-group="5" data-quiz="true">
+            <h3>Group 5</h3>
+            <div class="letters">Ѓ Ќ Љ Њ</div>
+            <div class="count">Unique letters</div>
+          </div>
+          <div class="group-card" data-group="all" data-quiz="true">
+            <h3>All Groups</h3>
+            <div class="letters">А — Ш</div>
+            <div class="count">All 31 letters</div>
+          </div>
+        </div>
+
         <div class="score-display">
-          <div class="score-number" id="vocab-score">0/0</div>
+          <div class="score-number" id="score">0/0</div>
           <div class="score-label">Correct answers</div>
         </div>
-        
-        <div class="vocab-quiz-card">
-          <button class="speak-btn" onclick="speakMacedonian(vocabQuizWords[vocabQuizIndex].mk)" style="margin: 0 auto 16px;">🔊</button>
-          <div class="vocab-quiz-word" id="vq-word">МАЧКА</div>
-          <div class="vocab-quiz-latin" id="vq-latin">mačka</div>
-          <div class="vocab-quiz-prompt">What does this word mean?</div>
-          <input type="text" class="vocab-input" id="vq-input" placeholder="Type the English meaning...">
-          <div class="vocab-feedback hidden" id="vq-feedback"></div>
+
+        <div class="quiz-question">
+          <div class="quiz-letter" id="quiz-letter">А</div>
+          <div class="quiz-prompt">What sound does this letter make?</div>
         </div>
-        
+
+        <div class="quiz-options" id="quiz-options"></div>
+
         <div class="controls">
-          <button class="btn btn-secondary" id="vq-show-btn">Show Answer</button>
-          <button class="btn btn-primary" id="vq-next-btn">Next Word →</button>
+          <button class="btn btn-primary" id="next-quiz-btn">
+            Next Question →
+          </button>
+        </div>
+      </div>
+
+      <!-- VOCABULARY VIEW -->
+      <div id="vocab-view" class="hidden">
+        <div class="vocab-header">
+          <h2>📝 Essential Vocabulary</h2>
+          <span class="vocab-stats" id="vocab-count">100+ words</span>
+        </div>
+
+        <input
+          type="text"
+          class="search-box"
+          id="vocab-search"
+          placeholder="🔍 Search words in English or Macedonian..."
+        />
+
+        <div class="category-tabs" id="category-tabs">
+          <button class="category-tab active" data-category="all">All</button>
+          <button class="category-tab" data-category="animals">
+            🐾 Animals
+          </button>
+          <button class="category-tab" data-category="food">🍎 Food</button>
+          <button class="category-tab" data-category="drinks">🥤 Drinks</button>
+          <button class="category-tab" data-category="family">👨‍👩‍👧 Family</button>
+          <button class="category-tab" data-category="body">🦶 Body</button>
+          <button class="category-tab" data-category="home">🏠 Home</button>
+          <button class="category-tab" data-category="nature">🌳 Nature</button>
+          <button class="category-tab" data-category="colors">🎨 Colors</button>
+          <button class="category-tab" data-category="numbers">
+            🔢 Numbers
+          </button>
+          <button class="category-tab" data-category="phrases">
+            🗣️ Phrases
+          </button>
+          <button class="category-tab" data-category="common">💬 Common</button>
+        </div>
+
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="vocab-browse">Browse</button>
+          <button class="toggle-btn" id="vocab-quiz-mode">Quiz Mode</button>
+        </div>
+
+        <div id="vocab-browse-container">
+          <p class="info-text">Tap a word to reveal its meaning</p>
+          <div class="vocab-grid" id="vocab-grid"></div>
+        </div>
+
+        <div id="vocab-quiz-container" class="hidden">
+          <div class="score-display">
+            <div class="score-number" id="vocab-score">0/0</div>
+            <div class="score-label">Correct answers</div>
+          </div>
+
+          <div class="vocab-quiz-card">
+            <button
+              class="speak-btn"
+              onclick="speakMacedonian(vocabQuizWords[vocabQuizIndex].mk)"
+              style="margin: 0 auto 16px"
+            >
+              🔊
+            </button>
+            <div class="vocab-quiz-word" id="vq-word">МАЧКА</div>
+            <div class="vocab-quiz-latin" id="vq-latin">mačka</div>
+            <div class="vocab-quiz-prompt">What does this word mean?</div>
+            <input
+              type="text"
+              class="vocab-input"
+              id="vq-input"
+              placeholder="Type the English meaning..."
+            />
+            <div class="vocab-feedback hidden" id="vq-feedback"></div>
+          </div>
+
+          <div class="controls">
+            <button class="btn btn-secondary" id="vq-show-btn">
+              Show Answer
+            </button>
+            <button class="btn btn-primary" id="vq-next-btn">
+              Next Word →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFERENCE VIEW -->
+      <div id="reference-view" class="hidden">
+        <div class="reference-table">
+          <h3>Group 1: Familiar (look & sound like English)</h3>
+          <div class="letter-grid" id="ref-group1"></div>
+        </div>
+        <div class="reference-table">
+          <h3>Group 2: False Friends (look familiar, different sound)</h3>
+          <div class="letter-grid" id="ref-group2"></div>
+        </div>
+        <div class="reference-table">
+          <h3>Group 3: New but Easy</h3>
+          <div class="letter-grid" id="ref-group3"></div>
+        </div>
+        <div class="reference-table">
+          <h3>Group 4: Combo Sounds</h3>
+          <div class="letter-grid" id="ref-group4"></div>
+        </div>
+        <div class="reference-table">
+          <h3>Group 5: Unique to Macedonian</h3>
+          <div class="letter-grid" id="ref-group5"></div>
         </div>
       </div>
     </div>
-    
-    <!-- REFERENCE VIEW -->
-    <div id="reference-view" class="hidden">
-      <div class="reference-table"><h3>Group 1: Familiar (look & sound like English)</h3><div class="letter-grid" id="ref-group1"></div></div>
-      <div class="reference-table"><h3>Group 2: False Friends (look familiar, different sound)</h3><div class="letter-grid" id="ref-group2"></div></div>
-      <div class="reference-table"><h3>Group 3: New but Easy</h3><div class="letter-grid" id="ref-group3"></div></div>
-      <div class="reference-table"><h3>Group 4: Combo Sounds</h3><div class="letter-grid" id="ref-group4"></div></div>
-      <div class="reference-table"><h3>Group 5: Unique to Macedonian</h3><div class="letter-grid" id="ref-group5"></div></div>
-    </div>
-  </div>
-  
-  <script>
-    const letterGroups = {
-      1: [
-        { letter: "А", lower: "а", sound: "a", example: "Like 'a' in 'father'", trick: "Same as English A", word: "МАМА", wordLatin: "mama", wordMeaning: "mom" },
-        { letter: "Е", lower: "е", sound: "e", example: "Like 'e' in 'bet'", trick: "Same as English E", word: "ДЕН", wordLatin: "den", wordMeaning: "day" },
-        { letter: "К", lower: "к", sound: "k", example: "Like 'k' in 'kite'", trick: "Same as English K", word: "КНИГА", wordLatin: "kniga", wordMeaning: "book" },
-        { letter: "М", lower: "м", sound: "m", example: "Like 'm' in 'mom'", trick: "Same as English M", word: "МОРЕ", wordLatin: "more", wordMeaning: "sea" },
-        { letter: "О", lower: "о", sound: "o", example: "Like 'o' in 'pot'", trick: "Same as English O", word: "ОКО", wordLatin: "oko", wordMeaning: "eye" },
-        { letter: "Т", lower: "т", sound: "t", example: "Like 't' in 'top'", trick: "Same as English T", word: "ТАТО", wordLatin: "tato", wordMeaning: "dad" }
-      ],
-      2: [
-        { letter: "В", lower: "в", sound: "v", example: "Like 'v' in 'vet'", trick: "⚠️ Looks like B = sounds like V!", word: "ВОДА", wordLatin: "voda", wordMeaning: "water" },
-        { letter: "Н", lower: "н", sound: "n", example: "Like 'n' in 'no'", trick: "⚠️ Looks like H = sounds like N!", word: "НОС", wordLatin: "nos", wordMeaning: "nose" },
-        { letter: "Р", lower: "р", sound: "r", example: "Rolled 'r' (trilled)", trick: "⚠️ Looks like P = sounds like R!", word: "РИБА", wordLatin: "riba", wordMeaning: "fish" },
-        { letter: "С", lower: "с", sound: "s", example: "Like 's' in 'sun'", trick: "⚠️ Looks like C = sounds like S!", word: "СОНЦЕ", wordLatin: "sonce", wordMeaning: "sun" },
-        { letter: "У", lower: "у", sound: "oo", example: "Like 'oo' in 'food'", trick: "⚠️ Looks like Y = sounds like OO!", word: "УВО", wordLatin: "uvo", wordMeaning: "ear" },
-        { letter: "Х", lower: "х", sound: "h", example: "Like 'ch' in Scottish 'loch'", trick: "⚠️ Looks like X = sounds like H!", word: "ХРАНА", wordLatin: "hrana", wordMeaning: "food" },
-        { letter: "Ј", lower: "ј", sound: "y", example: "Like 'y' in 'yes'", trick: "⚠️ Looks like J = sounds like Y!", word: "ЈАБОЛКО", wordLatin: "jabolko", wordMeaning: "apple" }
-      ],
-      3: [
-        { letter: "Б", lower: "б", sound: "b", example: "Like 'b' in 'bat'", trick: "Looks like a 6", word: "БРАТ", wordLatin: "brat", wordMeaning: "brother" },
-        { letter: "Г", lower: "г", sound: "g", example: "Like 'g' in 'go'", trick: "Looks like upside-down L", word: "ГЛАВА", wordLatin: "glava", wordMeaning: "head" },
-        { letter: "Д", lower: "д", sound: "d", example: "Like 'd' in 'dog'", trick: "Looks like a little house", word: "ДОМ", wordLatin: "dom", wordMeaning: "home" },
-        { letter: "З", lower: "з", sound: "z", example: "Like 'z' in 'zoo'", trick: "Looks like a 3", word: "ЗЕМЈА", wordLatin: "zemja", wordMeaning: "earth" },
-        { letter: "И", lower: "и", sound: "ee", example: "Like 'ee' in 'see'", trick: "Backwards N = ee", word: "ИМЕ", wordLatin: "ime", wordMeaning: "name" },
-        { letter: "Л", lower: "л", sound: "l", example: "Like 'l' in 'lamp'", trick: "Looks like a tent /\\", word: "ЛИСТ", wordLatin: "list", wordMeaning: "leaf" },
-        { letter: "П", lower: "п", sound: "p", example: "Like 'p' in 'pen'", trick: "Looks like a doorway", word: "ПАТ", wordLatin: "pat", wordMeaning: "road" },
-        { letter: "Ф", lower: "ф", sound: "f", example: "Like 'f' in 'fan'", trick: "Person with arms out", word: "ФИЛМ", wordLatin: "film", wordMeaning: "film" },
-        { letter: "Ш", lower: "ш", sound: "sh", example: "Like 'sh' in 'ship'", trick: "Comb with 3 teeth = sh", word: "ШКОЛА", wordLatin: "škola", wordMeaning: "school" }
-      ],
-      4: [
-        { letter: "Ж", lower: "ж", sound: "zh", example: "Like 's' in 'measure'", trick: "Butterfly shape = zh", word: "ЖЕНА", wordLatin: "žena", wordMeaning: "woman" },
-        { letter: "Ц", lower: "ц", sound: "ts", example: "Like 'ts' in 'cats'", trick: "Makes the 'ts' combo", word: "ЦВЕТ", wordLatin: "cvet", wordMeaning: "flower" },
-        { letter: "Ч", lower: "ч", sound: "ch", example: "Like 'ch' in 'church'", trick: "Makes the 'ch' combo", word: "ЧАЈ", wordLatin: "čaj", wordMeaning: "tea" },
-        { letter: "Џ", lower: "џ", sound: "j", example: "Like 'j' in 'jungle'", trick: "Makes the 'dj' combo", word: "ЏЕБ", wordLatin: "džeb", wordMeaning: "pocket" },
-        { letter: "Ѕ", lower: "ѕ", sound: "dz", example: "Like 'ds' in 'heads'", trick: "⚠️ Looks like S = sounds DZ!", word: "ЅВЕЗДА", wordLatin: "dzvezda", wordMeaning: "star" }
-      ],
-      5: [
-        { letter: "Ѓ", lower: "ѓ", sound: "gy", example: "Soft 'g' + 'y' blended", trick: "Г + accent = soft gy", word: "ЃАВОЛ", wordLatin: "gjavol", wordMeaning: "devil" },
-        { letter: "Ќ", lower: "ќ", sound: "ky", example: "Like 'c' in 'cute'", trick: "К + accent = soft ky", word: "КУЌА", wordLatin: "kuḱa", wordMeaning: "house" },
-        { letter: "Љ", lower: "љ", sound: "ly", example: "Like 'lli' in 'million'", trick: "Л made soft = ly", word: "ЉУБОВ", wordLatin: "ljubov", wordMeaning: "love" },
-        { letter: "Њ", lower: "њ", sound: "ny", example: "Like 'ni' in 'onion'", trick: "Н made soft = ny", word: "КОЊ", wordLatin: "konj", wordMeaning: "horse" }
-      ]
-    };
-    
-    const practiceWords = {
-      1: [{ cyrillic: "МАМА", latin: "mama", meaning: "mom" },{ cyrillic: "ТАТА", latin: "tata", meaning: "dad" },{ cyrillic: "ОКО", latin: "oko", meaning: "eye" },{ cyrillic: "КОТ", latin: "kot", meaning: "tomcat" }],
-      2: [{ cyrillic: "ВОДА", latin: "voda", meaning: "water" },{ cyrillic: "НОС", latin: "nos", meaning: "nose" },{ cyrillic: "СОН", latin: "son", meaning: "dream" },{ cyrillic: "УВО", latin: "uvo", meaning: "ear" }],
-      3: [{ cyrillic: "ДОМ", latin: "dom", meaning: "home" },{ cyrillic: "БРАТ", latin: "brat", meaning: "brother" },{ cyrillic: "ГЛАВА", latin: "glava", meaning: "head" },{ cyrillic: "ФИЛМ", latin: "film", meaning: "film" }],
-      4: [{ cyrillic: "ЖЕНА", latin: "žena", meaning: "woman" },{ cyrillic: "ЦВЕТ", latin: "cvet", meaning: "flower" },{ cyrillic: "ЧАЈ", latin: "čaj", meaning: "tea" },{ cyrillic: "ЅВЕЗДА", latin: "dzvezda", meaning: "star" }],
-      5: [{ cyrillic: "КУЌА", latin: "kuḱa", meaning: "house" },{ cyrillic: "ЉУБОВ", latin: "ljubov", meaning: "love" },{ cyrillic: "КОЊ", latin: "konj", meaning: "horse" },{ cyrillic: "ЃАВОЛ", latin: "gjavol", meaning: "devil" }]
-    };
-    
-    const vocabulary = {
-      animals: [
-        { mk: "МАЧКА", latin: "mačka", en: "cat" },{ mk: "КУЧЕ", latin: "kuče", en: "dog" },{ mk: "ПТИЦА", latin: "ptica", en: "bird" },{ mk: "РИБА", latin: "riba", en: "fish" },{ mk: "КОЊ", latin: "konj", en: "horse" },{ mk: "КРАВА", latin: "krava", en: "cow" },{ mk: "СВИЊА", latin: "svinja", en: "pig" },{ mk: "ОВЦА", latin: "ovca", en: "sheep" },{ mk: "КОЗА", latin: "koza", en: "goat" },{ mk: "ПИЛЕ", latin: "pile", en: "chicken" },{ mk: "ЗАЈАК", latin: "zajak", en: "rabbit" },{ mk: "МЕЧКА", latin: "mečka", en: "bear" },{ mk: "ВОЛК", latin: "volk", en: "wolf" },{ mk: "ЛИСИЦА", latin: "lisica", en: "fox" },{ mk: "СЛОН", latin: "slon", en: "elephant" }
-      ],
-      food: [
-        { mk: "ЛЕБ", latin: "leb", en: "bread" },{ mk: "СИРЕЊЕ", latin: "sirenje", en: "cheese" },{ mk: "ЈАЈЦЕ", latin: "jajce", en: "egg" },{ mk: "МЕСО", latin: "meso", en: "meat" },{ mk: "ОРИЗ", latin: "oriz", en: "rice" },{ mk: "ЈАБОЛКО", latin: "jabolko", en: "apple" },{ mk: "БАНАНА", latin: "banana", en: "banana" },{ mk: "ПОРТОКАЛ", latin: "portokal", en: "orange" },{ mk: "ДОМАТ", latin: "domat", en: "tomato" },{ mk: "КРАСТАВИЦА", latin: "krastavica", en: "cucumber" },{ mk: "МОРКОВ", latin: "morkov", en: "carrot" },{ mk: "КОМПИР", latin: "kompir", en: "potato" },{ mk: "КРОМИД", latin: "kromid", en: "onion" },{ mk: "ШЕЌЕР", latin: "šeḱer", en: "sugar" },{ mk: "СОЛ", latin: "sol", en: "salt" }
-      ],
-      drinks: [
-        { mk: "ВОДА", latin: "voda", en: "water" },{ mk: "МЛЕКО", latin: "mleko", en: "milk" },{ mk: "КАФЕ", latin: "kafe", en: "coffee" },{ mk: "ЧАЈ", latin: "čaj", en: "tea" },{ mk: "СОК", latin: "sok", en: "juice" },{ mk: "ПИВО", latin: "pivo", en: "beer" },{ mk: "ВИНО", latin: "vino", en: "wine" },{ mk: "РАКИЈА", latin: "rakija", en: "brandy" }
-      ],
-      family: [
-        { mk: "МАЈКА", latin: "majka", en: "mother" },{ mk: "ТАТКО", latin: "tatko", en: "father" },{ mk: "БРАТ", latin: "brat", en: "brother" },{ mk: "СЕСТРА", latin: "sestra", en: "sister" },{ mk: "СИН", latin: "sin", en: "son" },{ mk: "ЌЕРКА", latin: "ḱerka", en: "daughter" },{ mk: "БАБА", latin: "baba", en: "grandmother" },{ mk: "ДЕДО", latin: "dedo", en: "grandfather" },{ mk: "ВУЈКО", latin: "vujko", en: "uncle" },{ mk: "ТЕТКА", latin: "tetka", en: "aunt" },{ mk: "ДЕТЕ", latin: "dete", en: "child" },{ mk: "СЕМЕЈСТВО", latin: "semejstvo", en: "family" }
-      ],
-      body: [
-        { mk: "ГЛАВА", latin: "glava", en: "head" },{ mk: "ОКО", latin: "oko", en: "eye" },{ mk: "УВО", latin: "uvo", en: "ear" },{ mk: "НОС", latin: "nos", en: "nose" },{ mk: "УСТА", latin: "usta", en: "mouth" },{ mk: "ЗАБИ", latin: "zabi", en: "teeth" },{ mk: "ЈАЗИК", latin: "jazik", en: "tongue" },{ mk: "РАКА", latin: "raka", en: "hand" },{ mk: "НОГА", latin: "noga", en: "leg" },{ mk: "ПРСТ", latin: "prst", en: "finger" },{ mk: "СРЦЕ", latin: "srce", en: "heart" },{ mk: "КОСА", latin: "kosa", en: "hair" },{ mk: "ЛИЦЕ", latin: "lice", en: "face" },{ mk: "СТОМАК", latin: "stomak", en: "stomach" }
-      ],
-      home: [
-        { mk: "КУЌА", latin: "kuḱa", en: "house" },{ mk: "ВРАТА", latin: "vrata", en: "door" },{ mk: "ПРОЗОРЕЦ", latin: "prozorec", en: "window" },{ mk: "СОБА", latin: "soba", en: "room" },{ mk: "КУЈНА", latin: "kujna", en: "kitchen" },{ mk: "БАЊА", latin: "banja", en: "bathroom" },{ mk: "МАСА", latin: "masa", en: "table" },{ mk: "СТОЛ", latin: "stol", en: "chair" },{ mk: "КРЕВЕТ", latin: "krevet", en: "bed" },{ mk: "ПОД", latin: "pod", en: "floor" },{ mk: "КЛУЧ", latin: "kluč", en: "key" },{ mk: "ТЕПИХ", latin: "tepih", en: "carpet" }
-      ],
-      nature: [
-        { mk: "СОНЦЕ", latin: "sonce", en: "sun" },{ mk: "МЕСЕЧИНА", latin: "mesečina", en: "moon" },{ mk: "ЅВЕЗДА", latin: "dzvezda", en: "star" },{ mk: "НЕБО", latin: "nebo", en: "sky" },{ mk: "ОБЛАК", latin: "oblak", en: "cloud" },{ mk: "ДОЖД", latin: "dožd", en: "rain" },{ mk: "СНЕГ", latin: "sneg", en: "snow" },{ mk: "ВЕТЕР", latin: "veter", en: "wind" },{ mk: "РЕКА", latin: "reka", en: "river" },{ mk: "МОРЕ", latin: "more", en: "sea" },{ mk: "ЕЗЕРО", latin: "ezero", en: "lake" },{ mk: "ПЛАНИНА", latin: "planina", en: "mountain" },{ mk: "ДРВО", latin: "drvo", en: "tree" },{ mk: "ЦВЕТ", latin: "cvet", en: "flower" },{ mk: "ТРЕВА", latin: "treva", en: "grass" }
-      ],
-      colors: [
-        { mk: "ЦРВЕНА", latin: "crvena", en: "red" },{ mk: "СИНА", latin: "sina", en: "blue" },{ mk: "ЗЕЛЕНА", latin: "zelena", en: "green" },{ mk: "ЖОЛТА", latin: "žolta", en: "yellow" },{ mk: "БЕЛА", latin: "bela", en: "white" },{ mk: "ЦРНА", latin: "crna", en: "black" },{ mk: "ПОРТОКАЛОВА", latin: "portokalova", en: "orange" },{ mk: "РОЗОВА", latin: "rozova", en: "pink" },{ mk: "КАФЕАВА", latin: "kafeava", en: "brown" },{ mk: "СИВА", latin: "siva", en: "gray" }
-      ],
-      numbers: [
-        { mk: "ЕДЕН", latin: "eden", en: "one" },{ mk: "ДВА", latin: "dva", en: "two" },{ mk: "ТРИ", latin: "tri", en: "three" },{ mk: "ЧЕТИРИ", latin: "četiri", en: "four" },{ mk: "ПЕТ", latin: "pet", en: "five" },{ mk: "ШЕСТ", latin: "šest", en: "six" },{ mk: "СЕДУМ", latin: "sedum", en: "seven" },{ mk: "ОСУМ", latin: "osum", en: "eight" },{ mk: "ДЕВЕТ", latin: "devet", en: "nine" },{ mk: "ДЕСЕТ", latin: "deset", en: "ten" }
-      ],
-      common: [
-        { mk: "ДА", latin: "da", en: "yes" },{ mk: "НЕ", latin: "ne", en: "no" },{ mk: "ДОБРО", latin: "dobro", en: "good" },{ mk: "ЛОШО", latin: "lošo", en: "bad" },{ mk: "ГОЛЕМО", latin: "golemo", en: "big" },{ mk: "МАЛО", latin: "malo", en: "small" },{ mk: "НОВО", latin: "novo", en: "new" },{ mk: "СТАРО", latin: "staro", en: "old" },{ mk: "ТОПЛО", latin: "toplo", en: "warm" },{ mk: "ЛАДНО", latin: "ladno", en: "cold" },{ mk: "ДЕНЕС", latin: "denes", en: "today" },{ mk: "УТРЕ", latin: "utre", en: "tomorrow" },{ mk: "ВЧЕРА", latin: "včera", en: "yesterday" },{ mk: "СЕГА", latin: "sega", en: "now" },{ mk: "ТУКА", latin: "tuka", en: "here" },{ mk: "ТАМУ", latin: "tamu", en: "there" },{ mk: "БЛАГОДАРАМ", latin: "blagodaram", en: "thank you" },{ mk: "МОЛАМ", latin: "molam", en: "please" },{ mk: "ЗДРАВО", latin: "zdravo", en: "hello" },{ mk: "ДОВИДУВАЊЕ", latin: "doviduvanje", en: "goodbye" }
-      ],
-      phrases: [
-        { mk: "ДОБРО УТРО", latin: "dobro utro", en: "good morning" },
-        { mk: "ДОБАР ДЕН", latin: "dobar den", en: "good afternoon" },
-        { mk: "ДОБРА ВЕЧЕР", latin: "dobra večer", en: "good evening" },
-        { mk: "ДОБРА НОЌ", latin: "dobra noḱ", en: "good night" },
-        { mk: "КАКО СИ?", latin: "kako si?", en: "how are you?" },
-        { mk: "ДОБРО СУМ", latin: "dobro sum", en: "I am good" },
-        { mk: "А ТИ?", latin: "a ti?", en: "and you?" },
-        { mk: "ЈАС СУМ", latin: "jas sum", en: "I am" },
-        { mk: "МОЕТО ИМЕ Е", latin: "moeto ime e", en: "my name is" },
-        { mk: "КАКО СЕ ВИКАШ?", latin: "kako se vikaš?", en: "what is your name?" },
-        { mk: "МИЛО МИ Е", latin: "milo mi e", en: "nice to meet you" },
-        { mk: "ИЗВИНИ", latin: "izvini", en: "sorry / excuse me" },
-        { mk: "НЕМА ПРОБЛЕМ", latin: "nema problem", en: "no problem" },
-        { mk: "ДА, МОЛАМ", latin: "da, molam", en: "yes, please" },
-        { mk: "НЕ, БЛАГОДАРАМ", latin: "ne, blagodaram", en: "no, thank you" },
-        { mk: "НЕ РАЗБИРАМ", latin: "ne razbiram", en: "I don't understand" },
-        { mk: "ЗБОРУВАШ АНГЛИСКИ?", latin: "zboravaš angliski?", en: "do you speak English?" },
-        { mk: "МАЛО ЗБОРУВАМ", latin: "malo zboruvam", en: "I speak a little" },
-        { mk: "ПОВТОРИ МОЛАМ", latin: "povtori molam", en: "repeat please" },
-        { mk: "ПОЛЕКА МОЛАМ", latin: "poleka molam", en: "slowly please" },
-        { mk: "КОЛКУ ЧИНИ?", latin: "kolku čini?", en: "how much does it cost?" },
-        { mk: "КАДЕ Е...?", latin: "kade e...?", en: "where is...?" },
-        { mk: "ШТО Е ОВА?", latin: "što e ova?", en: "what is this?" },
-        { mk: "САКАМ", latin: "sakam", en: "I want / I love" },
-        { mk: "НЕ САКАМ", latin: "ne sakam", en: "I don't want" },
-        { mk: "ГЛАДЕН СУМ", latin: "gladen sum", en: "I am hungry (male)" },
-        { mk: "ГЛАДНА СУМ", latin: "gladna sum", en: "I am hungry (female)" },
-        { mk: "ЖЕДЕН СУМ", latin: "žeden sum", en: "I am thirsty (male)" },
-        { mk: "ЖЕДНА СУМ", latin: "žedna sum", en: "I am thirsty (female)" },
-        { mk: "УМОРЕН СУМ", latin: "umoren sum", en: "I am tired (male)" },
-        { mk: "УМОРНА СУМ", latin: "umorna sum", en: "I am tired (female)" },
-        { mk: "ПОМОШ!", latin: "pomoš!", en: "help!" },
-        { mk: "СРЕЌЕН РОДЕНДЕН", latin: "sreḱen rodenden", en: "happy birthday" },
-        { mk: "СРЕЌНА НОВА ГОДИНА", latin: "sreḱna nova godina", en: "happy new year" },
-        { mk: "ПРИЈАТНО", latin: "prijatno", en: "enjoy your meal" },
-        { mk: "НА ЗДРАВЈЕ", latin: "na zdravje", en: "cheers / bless you" }
-      ]
-    };
-    
-    let currentGroup = 1, currentCard = 0, quizGroup = 1, quizIndex = 0, correctAnswers = 0, totalAnswers = 0, quizLetters = [];
-    let allLetters = [], fcIndex = 0, fcShuffled = false;
-    let currentCategory = 'all', vocabQuizWords = [], vocabQuizIndex = 0, vocabCorrect = 0, vocabTotal = 0;
-    
-    const groupColors = { 1: '#3b82f6', 2: '#f59e0b', 3: '#10b981', 4: '#8b5cf6', 5: '#ef4444' };
-    
-    // Text-to-speech function
-    function speakMacedonian(text) {
-      if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
-        window.speechSynthesis.cancel();
-        
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        // Try to find a Macedonian, Serbian, or Croatian voice (similar pronunciation)
-        const voices = window.speechSynthesis.getVoices();
-        const preferredLangs = ['mk', 'sr', 'hr', 'bs', 'sl', 'bg', 'ru'];
-        
-        let selectedVoice = null;
-        for (const lang of preferredLangs) {
-          selectedVoice = voices.find(v => v.lang.toLowerCase().startsWith(lang));
-          if (selectedVoice) break;
-        }
-        
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        
-        utterance.rate = 0.8; // Slightly slower for learning
-        utterance.pitch = 1;
-        
-        window.speechSynthesis.speak(utterance);
-      } else {
-        alert('Sorry, your browser does not support text-to-speech.');
-      }
-    }
-    
-    // Speak word from flashcard
-    function speakWord(group, cardIndex) {
-      const word = letterGroups[group][cardIndex].word;
-      speakMacedonian(word);
-    }
-    
-    // Load voices (some browsers load them async)
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
+
+    <script>
+      const letterGroups = {
+        1: [
+          {
+            letter: "А",
+            lower: "а",
+            sound: "a",
+            example: "Like 'a' in 'father'",
+            trick: "Same as English A",
+            word: "МАМА",
+            wordLatin: "mama",
+            wordMeaning: "mom",
+          },
+          {
+            letter: "Е",
+            lower: "е",
+            sound: "e",
+            example: "Like 'e' in 'bet'",
+            trick: "Same as English E",
+            word: "ДЕН",
+            wordLatin: "den",
+            wordMeaning: "day",
+          },
+          {
+            letter: "К",
+            lower: "к",
+            sound: "k",
+            example: "Like 'k' in 'kite'",
+            trick: "Same as English K",
+            word: "КНИГА",
+            wordLatin: "kniga",
+            wordMeaning: "book",
+          },
+          {
+            letter: "М",
+            lower: "м",
+            sound: "m",
+            example: "Like 'm' in 'mom'",
+            trick: "Same as English M",
+            word: "МОРЕ",
+            wordLatin: "more",
+            wordMeaning: "sea",
+          },
+          {
+            letter: "О",
+            lower: "о",
+            sound: "o",
+            example: "Like 'o' in 'pot'",
+            trick: "Same as English O",
+            word: "ОКО",
+            wordLatin: "oko",
+            wordMeaning: "eye",
+          },
+          {
+            letter: "Т",
+            lower: "т",
+            sound: "t",
+            example: "Like 't' in 'top'",
+            trick: "Same as English T",
+            word: "ТАТО",
+            wordLatin: "tato",
+            wordMeaning: "dad",
+          },
+        ],
+        2: [
+          {
+            letter: "В",
+            lower: "в",
+            sound: "v",
+            example: "Like 'v' in 'vet'",
+            trick: "⚠️ Looks like B = sounds like V!",
+            word: "ВОДА",
+            wordLatin: "voda",
+            wordMeaning: "water",
+          },
+          {
+            letter: "Н",
+            lower: "н",
+            sound: "n",
+            example: "Like 'n' in 'no'",
+            trick: "⚠️ Looks like H = sounds like N!",
+            word: "НОС",
+            wordLatin: "nos",
+            wordMeaning: "nose",
+          },
+          {
+            letter: "Р",
+            lower: "р",
+            sound: "r",
+            example: "Rolled 'r' (trilled)",
+            trick: "⚠️ Looks like P = sounds like R!",
+            word: "РИБА",
+            wordLatin: "riba",
+            wordMeaning: "fish",
+          },
+          {
+            letter: "С",
+            lower: "с",
+            sound: "s",
+            example: "Like 's' in 'sun'",
+            trick: "⚠️ Looks like C = sounds like S!",
+            word: "СОНЦЕ",
+            wordLatin: "sonce",
+            wordMeaning: "sun",
+          },
+          {
+            letter: "У",
+            lower: "у",
+            sound: "oo",
+            example: "Like 'oo' in 'food'",
+            trick: "⚠️ Looks like Y = sounds like OO!",
+            word: "УВО",
+            wordLatin: "uvo",
+            wordMeaning: "ear",
+          },
+          {
+            letter: "Х",
+            lower: "х",
+            sound: "h",
+            example: "Like 'ch' in Scottish 'loch'",
+            trick: "⚠️ Looks like X = sounds like H!",
+            word: "ХРАНА",
+            wordLatin: "hrana",
+            wordMeaning: "food",
+          },
+          {
+            letter: "Ј",
+            lower: "ј",
+            sound: "y",
+            example: "Like 'y' in 'yes'",
+            trick: "⚠️ Looks like J = sounds like Y!",
+            word: "ЈАБОЛКО",
+            wordLatin: "jabolko",
+            wordMeaning: "apple",
+          },
+        ],
+        3: [
+          {
+            letter: "Б",
+            lower: "б",
+            sound: "b",
+            example: "Like 'b' in 'bat'",
+            trick: "Looks like a 6",
+            word: "БРАТ",
+            wordLatin: "brat",
+            wordMeaning: "brother",
+          },
+          {
+            letter: "Г",
+            lower: "г",
+            sound: "g",
+            example: "Like 'g' in 'go'",
+            trick: "Looks like upside-down L",
+            word: "ГЛАВА",
+            wordLatin: "glava",
+            wordMeaning: "head",
+          },
+          {
+            letter: "Д",
+            lower: "д",
+            sound: "d",
+            example: "Like 'd' in 'dog'",
+            trick: "Looks like a little house",
+            word: "ДОМ",
+            wordLatin: "dom",
+            wordMeaning: "home",
+          },
+          {
+            letter: "З",
+            lower: "з",
+            sound: "z",
+            example: "Like 'z' in 'zoo'",
+            trick: "Looks like a 3",
+            word: "ЗЕМЈА",
+            wordLatin: "zemja",
+            wordMeaning: "earth",
+          },
+          {
+            letter: "И",
+            lower: "и",
+            sound: "ee",
+            example: "Like 'ee' in 'see'",
+            trick: "Backwards N = ee",
+            word: "ИМЕ",
+            wordLatin: "ime",
+            wordMeaning: "name",
+          },
+          {
+            letter: "Л",
+            lower: "л",
+            sound: "l",
+            example: "Like 'l' in 'lamp'",
+            trick: "Looks like a tent /\\",
+            word: "ЛИСТ",
+            wordLatin: "list",
+            wordMeaning: "leaf",
+          },
+          {
+            letter: "П",
+            lower: "п",
+            sound: "p",
+            example: "Like 'p' in 'pen'",
+            trick: "Looks like a doorway",
+            word: "ПАТ",
+            wordLatin: "pat",
+            wordMeaning: "road",
+          },
+          {
+            letter: "Ф",
+            lower: "ф",
+            sound: "f",
+            example: "Like 'f' in 'fan'",
+            trick: "Person with arms out",
+            word: "ФИЛМ",
+            wordLatin: "film",
+            wordMeaning: "film",
+          },
+          {
+            letter: "Ш",
+            lower: "ш",
+            sound: "sh",
+            example: "Like 'sh' in 'ship'",
+            trick: "Comb with 3 teeth = sh",
+            word: "ШКОЛА",
+            wordLatin: "škola",
+            wordMeaning: "school",
+          },
+        ],
+        4: [
+          {
+            letter: "Ж",
+            lower: "ж",
+            sound: "zh",
+            example: "Like 's' in 'measure'",
+            trick: "Butterfly shape = zh",
+            word: "ЖЕНА",
+            wordLatin: "žena",
+            wordMeaning: "woman",
+          },
+          {
+            letter: "Ц",
+            lower: "ц",
+            sound: "ts",
+            example: "Like 'ts' in 'cats'",
+            trick: "Makes the 'ts' combo",
+            word: "ЦВЕТ",
+            wordLatin: "cvet",
+            wordMeaning: "flower",
+          },
+          {
+            letter: "Ч",
+            lower: "ч",
+            sound: "ch",
+            example: "Like 'ch' in 'church'",
+            trick: "Makes the 'ch' combo",
+            word: "ЧАЈ",
+            wordLatin: "čaj",
+            wordMeaning: "tea",
+          },
+          {
+            letter: "Џ",
+            lower: "џ",
+            sound: "j",
+            example: "Like 'j' in 'jungle'",
+            trick: "Makes the 'dj' combo",
+            word: "ЏЕБ",
+            wordLatin: "džeb",
+            wordMeaning: "pocket",
+          },
+          {
+            letter: "Ѕ",
+            lower: "ѕ",
+            sound: "dz",
+            example: "Like 'ds' in 'heads'",
+            trick: "⚠️ Looks like S = sounds DZ!",
+            word: "ЅВЕЗДА",
+            wordLatin: "dzvezda",
+            wordMeaning: "star",
+          },
+        ],
+        5: [
+          {
+            letter: "Ѓ",
+            lower: "ѓ",
+            sound: "gy",
+            example: "Soft 'g' + 'y' blended",
+            trick: "Г + accent = soft gy",
+            word: "ЃАВОЛ",
+            wordLatin: "gjavol",
+            wordMeaning: "devil",
+          },
+          {
+            letter: "Ќ",
+            lower: "ќ",
+            sound: "ky",
+            example: "Like 'c' in 'cute'",
+            trick: "К + accent = soft ky",
+            word: "КУЌА",
+            wordLatin: "kuḱa",
+            wordMeaning: "house",
+          },
+          {
+            letter: "Љ",
+            lower: "љ",
+            sound: "ly",
+            example: "Like 'lli' in 'million'",
+            trick: "Л made soft = ly",
+            word: "ЉУБОВ",
+            wordLatin: "ljubov",
+            wordMeaning: "love",
+          },
+          {
+            letter: "Њ",
+            lower: "њ",
+            sound: "ny",
+            example: "Like 'ni' in 'onion'",
+            trick: "Н made soft = ny",
+            word: "КОЊ",
+            wordLatin: "konj",
+            wordMeaning: "horse",
+          },
+        ],
       };
-    }
-    
-    function initAllLetters() {
-      allLetters = [];
-      for (let g = 1; g <= 5; g++) letterGroups[g].forEach(l => allLetters.push({ ...l, group: g }));
-    }
-    initAllLetters();
-    
-    // View switching
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const view = tab.dataset.view;
-        ['learn', 'flashcards', 'quiz', 'vocab', 'reference'].forEach(v => {
-          document.getElementById(v + '-view').classList.toggle('hidden', v !== view);
+
+      const practiceWords = {
+        1: [
+          { cyrillic: "МАМА", latin: "mama", meaning: "mom" },
+          { cyrillic: "ТАТА", latin: "tata", meaning: "dad" },
+          { cyrillic: "ОКО", latin: "oko", meaning: "eye" },
+          { cyrillic: "КОТ", latin: "kot", meaning: "tomcat" },
+        ],
+        2: [
+          { cyrillic: "ВОДА", latin: "voda", meaning: "water" },
+          { cyrillic: "НОС", latin: "nos", meaning: "nose" },
+          { cyrillic: "СОН", latin: "son", meaning: "dream" },
+          { cyrillic: "УВО", latin: "uvo", meaning: "ear" },
+        ],
+        3: [
+          { cyrillic: "ДОМ", latin: "dom", meaning: "home" },
+          { cyrillic: "БРАТ", latin: "brat", meaning: "brother" },
+          { cyrillic: "ГЛАВА", latin: "glava", meaning: "head" },
+          { cyrillic: "ФИЛМ", latin: "film", meaning: "film" },
+        ],
+        4: [
+          { cyrillic: "ЖЕНА", latin: "žena", meaning: "woman" },
+          { cyrillic: "ЦВЕТ", latin: "cvet", meaning: "flower" },
+          { cyrillic: "ЧАЈ", latin: "čaj", meaning: "tea" },
+          { cyrillic: "ЅВЕЗДА", latin: "dzvezda", meaning: "star" },
+        ],
+        5: [
+          { cyrillic: "КУЌА", latin: "kuḱa", meaning: "house" },
+          { cyrillic: "ЉУБОВ", latin: "ljubov", meaning: "love" },
+          { cyrillic: "КОЊ", latin: "konj", meaning: "horse" },
+          { cyrillic: "ЃАВОЛ", latin: "gjavol", meaning: "devil" },
+        ],
+      };
+
+      const vocabulary = {
+        animals: [
+          { mk: "МАЧКА", latin: "mačka", en: "cat" },
+          { mk: "КУЧЕ", latin: "kuče", en: "dog" },
+          { mk: "ПТИЦА", latin: "ptica", en: "bird" },
+          { mk: "РИБА", latin: "riba", en: "fish" },
+          { mk: "КОЊ", latin: "konj", en: "horse" },
+          { mk: "КРАВА", latin: "krava", en: "cow" },
+          { mk: "СВИЊА", latin: "svinja", en: "pig" },
+          { mk: "ОВЦА", latin: "ovca", en: "sheep" },
+          { mk: "КОЗА", latin: "koza", en: "goat" },
+          { mk: "ПИЛЕ", latin: "pile", en: "chicken" },
+          { mk: "ЗАЈАК", latin: "zajak", en: "rabbit" },
+          { mk: "МЕЧКА", latin: "mečka", en: "bear" },
+          { mk: "ВОЛК", latin: "volk", en: "wolf" },
+          { mk: "ЛИСИЦА", latin: "lisica", en: "fox" },
+          { mk: "СЛОН", latin: "slon", en: "elephant" },
+        ],
+        food: [
+          { mk: "ЛЕБ", latin: "leb", en: "bread" },
+          { mk: "СИРЕЊЕ", latin: "sirenje", en: "cheese" },
+          { mk: "ЈАЈЦЕ", latin: "jajce", en: "egg" },
+          { mk: "МЕСО", latin: "meso", en: "meat" },
+          { mk: "ОРИЗ", latin: "oriz", en: "rice" },
+          { mk: "ЈАБОЛКО", latin: "jabolko", en: "apple" },
+          { mk: "БАНАНА", latin: "banana", en: "banana" },
+          { mk: "ПОРТОКАЛ", latin: "portokal", en: "orange" },
+          { mk: "ДОМАТ", latin: "domat", en: "tomato" },
+          { mk: "КРАСТАВИЦА", latin: "krastavica", en: "cucumber" },
+          { mk: "МОРКОВ", latin: "morkov", en: "carrot" },
+          { mk: "КОМПИР", latin: "kompir", en: "potato" },
+          { mk: "КРОМИД", latin: "kromid", en: "onion" },
+          { mk: "ШЕЌЕР", latin: "šeḱer", en: "sugar" },
+          { mk: "СОЛ", latin: "sol", en: "salt" },
+        ],
+        drinks: [
+          { mk: "ВОДА", latin: "voda", en: "water" },
+          { mk: "МЛЕКО", latin: "mleko", en: "milk" },
+          { mk: "КАФЕ", latin: "kafe", en: "coffee" },
+          { mk: "ЧАЈ", latin: "čaj", en: "tea" },
+          { mk: "СОК", latin: "sok", en: "juice" },
+          { mk: "ПИВО", latin: "pivo", en: "beer" },
+          { mk: "ВИНО", latin: "vino", en: "wine" },
+          { mk: "РАКИЈА", latin: "rakija", en: "brandy" },
+        ],
+        family: [
+          { mk: "МАЈКА", latin: "majka", en: "mother" },
+          { mk: "ТАТКО", latin: "tatko", en: "father" },
+          { mk: "БРАТ", latin: "brat", en: "brother" },
+          { mk: "СЕСТРА", latin: "sestra", en: "sister" },
+          { mk: "СИН", latin: "sin", en: "son" },
+          { mk: "ЌЕРКА", latin: "ḱerka", en: "daughter" },
+          { mk: "БАБА", latin: "baba", en: "grandmother" },
+          { mk: "ДЕДО", latin: "dedo", en: "grandfather" },
+          { mk: "ВУЈКО", latin: "vujko", en: "uncle" },
+          { mk: "ТЕТКА", latin: "tetka", en: "aunt" },
+          { mk: "ДЕТЕ", latin: "dete", en: "child" },
+          { mk: "СЕМЕЈСТВО", latin: "semejstvo", en: "family" },
+        ],
+        body: [
+          { mk: "ГЛАВА", latin: "glava", en: "head" },
+          { mk: "ОКО", latin: "oko", en: "eye" },
+          { mk: "УВО", latin: "uvo", en: "ear" },
+          { mk: "НОС", latin: "nos", en: "nose" },
+          { mk: "УСТА", latin: "usta", en: "mouth" },
+          { mk: "ЗАБИ", latin: "zabi", en: "teeth" },
+          { mk: "ЈАЗИК", latin: "jazik", en: "tongue" },
+          { mk: "РАКА", latin: "raka", en: "hand" },
+          { mk: "НОГА", latin: "noga", en: "leg" },
+          { mk: "ПРСТ", latin: "prst", en: "finger" },
+          { mk: "СРЦЕ", latin: "srce", en: "heart" },
+          { mk: "КОСА", latin: "kosa", en: "hair" },
+          { mk: "ЛИЦЕ", latin: "lice", en: "face" },
+          { mk: "СТОМАК", latin: "stomak", en: "stomach" },
+        ],
+        home: [
+          { mk: "КУЌА", latin: "kuḱa", en: "house" },
+          { mk: "ВРАТА", latin: "vrata", en: "door" },
+          { mk: "ПРОЗОРЕЦ", latin: "prozorec", en: "window" },
+          { mk: "СОБА", latin: "soba", en: "room" },
+          { mk: "КУЈНА", latin: "kujna", en: "kitchen" },
+          { mk: "БАЊА", latin: "banja", en: "bathroom" },
+          { mk: "МАСА", latin: "masa", en: "table" },
+          { mk: "СТОЛ", latin: "stol", en: "chair" },
+          { mk: "КРЕВЕТ", latin: "krevet", en: "bed" },
+          { mk: "ПОД", latin: "pod", en: "floor" },
+          { mk: "КЛУЧ", latin: "kluč", en: "key" },
+          { mk: "ТЕПИХ", latin: "tepih", en: "carpet" },
+        ],
+        nature: [
+          { mk: "СОНЦЕ", latin: "sonce", en: "sun" },
+          { mk: "МЕСЕЧИНА", latin: "mesečina", en: "moon" },
+          { mk: "ЅВЕЗДА", latin: "dzvezda", en: "star" },
+          { mk: "НЕБО", latin: "nebo", en: "sky" },
+          { mk: "ОБЛАК", latin: "oblak", en: "cloud" },
+          { mk: "ДОЖД", latin: "dožd", en: "rain" },
+          { mk: "СНЕГ", latin: "sneg", en: "snow" },
+          { mk: "ВЕТЕР", latin: "veter", en: "wind" },
+          { mk: "РЕКА", latin: "reka", en: "river" },
+          { mk: "МОРЕ", latin: "more", en: "sea" },
+          { mk: "ЕЗЕРО", latin: "ezero", en: "lake" },
+          { mk: "ПЛАНИНА", latin: "planina", en: "mountain" },
+          { mk: "ДРВО", latin: "drvo", en: "tree" },
+          { mk: "ЦВЕТ", latin: "cvet", en: "flower" },
+          { mk: "ТРЕВА", latin: "treva", en: "grass" },
+        ],
+        colors: [
+          { mk: "ЦРВЕНА", latin: "crvena", en: "red" },
+          { mk: "СИНА", latin: "sina", en: "blue" },
+          { mk: "ЗЕЛЕНА", latin: "zelena", en: "green" },
+          { mk: "ЖОЛТА", latin: "žolta", en: "yellow" },
+          { mk: "БЕЛА", latin: "bela", en: "white" },
+          { mk: "ЦРНА", latin: "crna", en: "black" },
+          { mk: "ПОРТОКАЛОВА", latin: "portokalova", en: "orange" },
+          { mk: "РОЗОВА", latin: "rozova", en: "pink" },
+          { mk: "КАФЕАВА", latin: "kafeava", en: "brown" },
+          { mk: "СИВА", latin: "siva", en: "gray" },
+        ],
+        numbers: [
+          { mk: "ЕДЕН", latin: "eden", en: "one" },
+          { mk: "ДВА", latin: "dva", en: "two" },
+          { mk: "ТРИ", latin: "tri", en: "three" },
+          { mk: "ЧЕТИРИ", latin: "četiri", en: "four" },
+          { mk: "ПЕТ", latin: "pet", en: "five" },
+          { mk: "ШЕСТ", latin: "šest", en: "six" },
+          { mk: "СЕДУМ", latin: "sedum", en: "seven" },
+          { mk: "ОСУМ", latin: "osum", en: "eight" },
+          { mk: "ДЕВЕТ", latin: "devet", en: "nine" },
+          { mk: "ДЕСЕТ", latin: "deset", en: "ten" },
+        ],
+        common: [
+          { mk: "ДА", latin: "da", en: "yes" },
+          { mk: "НЕ", latin: "ne", en: "no" },
+          { mk: "ДОБРО", latin: "dobro", en: "good" },
+          { mk: "ЛОШО", latin: "lošo", en: "bad" },
+          { mk: "ГОЛЕМО", latin: "golemo", en: "big" },
+          { mk: "МАЛО", latin: "malo", en: "small" },
+          { mk: "НОВО", latin: "novo", en: "new" },
+          { mk: "СТАРО", latin: "staro", en: "old" },
+          { mk: "ТОПЛО", latin: "toplo", en: "warm" },
+          { mk: "ЛАДНО", latin: "ladno", en: "cold" },
+          { mk: "ДЕНЕС", latin: "denes", en: "today" },
+          { mk: "УТРЕ", latin: "utre", en: "tomorrow" },
+          { mk: "ВЧЕРА", latin: "včera", en: "yesterday" },
+          { mk: "СЕГА", latin: "sega", en: "now" },
+          { mk: "ТУКА", latin: "tuka", en: "here" },
+          { mk: "ТАМУ", latin: "tamu", en: "there" },
+          { mk: "БЛАГОДАРАМ", latin: "blagodaram", en: "thank you" },
+          { mk: "МОЛАМ", latin: "molam", en: "please" },
+          { mk: "ЗДРАВО", latin: "zdravo", en: "hello" },
+          { mk: "ДОВИДУВАЊЕ", latin: "doviduvanje", en: "goodbye" },
+        ],
+        phrases: [
+          { mk: "ДОБРО УТРО", latin: "dobro utro", en: "good morning" },
+          { mk: "ДОБАР ДЕН", latin: "dobar den", en: "good afternoon" },
+          { mk: "ДОБРА ВЕЧЕР", latin: "dobra večer", en: "good evening" },
+          { mk: "ДОБРА НОЌ", latin: "dobra noḱ", en: "good night" },
+          { mk: "КАКО СИ?", latin: "kako si?", en: "how are you?" },
+          { mk: "ДОБРО СУМ", latin: "dobro sum", en: "I am good" },
+          { mk: "А ТИ?", latin: "a ti?", en: "and you?" },
+          { mk: "ЈАС СУМ", latin: "jas sum", en: "I am" },
+          { mk: "МОЕТО ИМЕ Е", latin: "moeto ime e", en: "my name is" },
+          {
+            mk: "КАКО СЕ ВИКАШ?",
+            latin: "kako se vikaš?",
+            en: "what is your name?",
+          },
+          { mk: "МИЛО МИ Е", latin: "milo mi e", en: "nice to meet you" },
+          { mk: "ИЗВИНИ", latin: "izvini", en: "sorry / excuse me" },
+          { mk: "НЕМА ПРОБЛЕМ", latin: "nema problem", en: "no problem" },
+          { mk: "ДА, МОЛАМ", latin: "da, molam", en: "yes, please" },
+          {
+            mk: "НЕ, БЛАГОДАРАМ",
+            latin: "ne, blagodaram",
+            en: "no, thank you",
+          },
+          { mk: "НЕ РАЗБИРАМ", latin: "ne razbiram", en: "I don't understand" },
+          {
+            mk: "ЗБОРУВАШ АНГЛИСКИ?",
+            latin: "zboravaš angliski?",
+            en: "do you speak English?",
+          },
+          {
+            mk: "МАЛО ЗБОРУВАМ",
+            latin: "malo zboruvam",
+            en: "I speak a little",
+          },
+          { mk: "ПОВТОРИ МОЛАМ", latin: "povtori molam", en: "repeat please" },
+          { mk: "ПОЛЕКА МОЛАМ", latin: "poleka molam", en: "slowly please" },
+          {
+            mk: "КОЛКУ ЧИНИ?",
+            latin: "kolku čini?",
+            en: "how much does it cost?",
+          },
+          { mk: "КАДЕ Е...?", latin: "kade e...?", en: "where is...?" },
+          { mk: "ШТО Е ОВА?", latin: "što e ova?", en: "what is this?" },
+          { mk: "САКАМ", latin: "sakam", en: "I want / I love" },
+          { mk: "НЕ САКАМ", latin: "ne sakam", en: "I don't want" },
+          { mk: "ГЛАДЕН СУМ", latin: "gladen sum", en: "I am hungry (male)" },
+          { mk: "ГЛАДНА СУМ", latin: "gladna sum", en: "I am hungry (female)" },
+          { mk: "ЖЕДЕН СУМ", latin: "žeden sum", en: "I am thirsty (male)" },
+          { mk: "ЖЕДНА СУМ", latin: "žedna sum", en: "I am thirsty (female)" },
+          { mk: "УМОРЕН СУМ", latin: "umoren sum", en: "I am tired (male)" },
+          { mk: "УМОРНА СУМ", latin: "umorna sum", en: "I am tired (female)" },
+          { mk: "ПОМОШ!", latin: "pomoš!", en: "help!" },
+          {
+            mk: "СРЕЌЕН РОДЕНДЕН",
+            latin: "sreḱen rodenden",
+            en: "happy birthday",
+          },
+          {
+            mk: "СРЕЌНА НОВА ГОДИНА",
+            latin: "sreḱna nova godina",
+            en: "happy new year",
+          },
+          { mk: "ПРИЈАТНО", latin: "prijatno", en: "enjoy your meal" },
+          { mk: "НА ЗДРАВЈЕ", latin: "na zdravje", en: "cheers / bless you" },
+        ],
+      };
+
+      let currentGroup = 1,
+        currentCard = 0,
+        quizGroup = 1,
+        quizIndex = 0,
+        correctAnswers = 0,
+        totalAnswers = 0,
+        quizLetters = [];
+      let allLetters = [],
+        fcIndex = 0,
+        fcShuffled = false;
+      let currentCategory = "all",
+        vocabQuizWords = [],
+        vocabQuizIndex = 0,
+        vocabCorrect = 0,
+        vocabTotal = 0;
+
+      const groupColors = {
+        1: "#3b82f6",
+        2: "#f59e0b",
+        3: "#10b981",
+        4: "#8b5cf6",
+        5: "#ef4444",
+      };
+
+      // Text-to-speech function
+      function speakMacedonian(text) {
+        if ("speechSynthesis" in window) {
+          // Cancel any ongoing speech
+          window.speechSynthesis.cancel();
+
+          const utterance = new SpeechSynthesisUtterance(text);
+
+          // Try to find a Macedonian, Serbian, or Croatian voice (similar pronunciation)
+          const voices = window.speechSynthesis.getVoices();
+          const preferredLangs = ["mk", "sr", "hr", "bs", "sl", "bg", "ru"];
+
+          let selectedVoice = null;
+          for (const lang of preferredLangs) {
+            selectedVoice = voices.find((v) =>
+              v.lang.toLowerCase().startsWith(lang)
+            );
+            if (selectedVoice) break;
+          }
+
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+
+          utterance.rate = 0.8; // Slightly slower for learning
+          utterance.pitch = 1;
+
+          window.speechSynthesis.speak(utterance);
+        } else {
+          alert("Sorry, your browser does not support text-to-speech.");
+        }
+      }
+
+      // Speak word from flashcard
+      function speakWord(group, cardIndex) {
+        const word = letterGroups[group][cardIndex].word;
+        speakMacedonian(word);
+      }
+
+      // Load voices (some browsers load them async)
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
+
+      function initAllLetters() {
+        allLetters = [];
+        for (let g = 1; g <= 5; g++)
+          letterGroups[g].forEach((l) => allLetters.push({ ...l, group: g }));
+      }
+      initAllLetters();
+
+      // View switching
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          const view = tab.dataset.view;
+          ["learn", "flashcards", "quiz", "vocab", "reference"].forEach((v) => {
+            document
+              .getElementById(v + "-view")
+              .classList.toggle("hidden", v !== view);
+          });
+          if (view === "reference") renderReference();
+          if (view === "flashcards") updateFlashcardAll();
+          if (view === "vocab") renderVocab();
         });
-        if (view === 'reference') renderReference();
-        if (view === 'flashcards') updateFlashcardAll();
-        if (view === 'vocab') renderVocab();
       });
-    });
-    
-    // Learn view group selection
-    document.querySelectorAll('.group-card:not([data-quiz])').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.group-card:not([data-quiz])').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        currentGroup = parseInt(card.dataset.group);
-        currentCard = 0;
-        document.getElementById('flashcard').classList.remove('flipped');
-        updateFlashcard();
-        updatePracticeWords();
+
+      // Learn view group selection
+      document
+        .querySelectorAll(".group-card:not([data-quiz])")
+        .forEach((card) => {
+          card.addEventListener("click", () => {
+            document
+              .querySelectorAll(".group-card:not([data-quiz])")
+              .forEach((c) => c.classList.remove("selected"));
+            card.classList.add("selected");
+            currentGroup = parseInt(card.dataset.group);
+            currentCard = 0;
+            document.getElementById("flashcard").classList.remove("flipped");
+            updateFlashcard();
+            updatePracticeWords();
+          });
+        });
+
+      // Quiz group selection
+      document.querySelectorAll(".group-card[data-quiz]").forEach((card) => {
+        card.addEventListener("click", () => {
+          document
+            .querySelectorAll(".group-card[data-quiz]")
+            .forEach((c) => c.classList.remove("selected"));
+          card.classList.add("selected");
+          quizGroup = card.dataset.group;
+          resetQuiz();
+        });
       });
-    });
-    
-    // Quiz group selection
-    document.querySelectorAll('.group-card[data-quiz]').forEach(card => {
-      card.addEventListener('click', () => {
-        document.querySelectorAll('.group-card[data-quiz]').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        quizGroup = card.dataset.group;
-        resetQuiz();
+
+      document
+        .getElementById("flashcard")
+        .addEventListener("click", () =>
+          document.getElementById("flashcard").classList.toggle("flipped")
+        );
+      document
+        .getElementById("flashcard-all")
+        .addEventListener("click", () =>
+          document.getElementById("flashcard-all").classList.toggle("flipped")
+        );
+
+      document.getElementById("prev-btn").addEventListener("click", () => {
+        if (currentCard > 0) {
+          currentCard--;
+          document.getElementById("flashcard").classList.remove("flipped");
+          updateFlashcard();
+        }
       });
-    });
-    
-    document.getElementById('flashcard').addEventListener('click', () => document.getElementById('flashcard').classList.toggle('flipped'));
-    document.getElementById('flashcard-all').addEventListener('click', () => document.getElementById('flashcard-all').classList.toggle('flipped'));
-    
-    document.getElementById('prev-btn').addEventListener('click', () => { if (currentCard > 0) { currentCard--; document.getElementById('flashcard').classList.remove('flipped'); updateFlashcard(); } });
-    document.getElementById('next-btn').addEventListener('click', () => { if (currentCard < letterGroups[currentGroup].length - 1) { currentCard++; document.getElementById('flashcard').classList.remove('flipped'); updateFlashcard(); } });
-    
-    function updateFlashcard() {
-      const data = letterGroups[currentGroup][currentCard];
-      document.getElementById('card-letter').textContent = data.letter;
-      document.getElementById('card-lowercase').textContent = data.lower;
-      document.getElementById('card-sound').textContent = `"${data.sound}"`;
-      document.getElementById('card-example').textContent = data.example;
-      document.getElementById('card-trick').textContent = data.trick;
-      document.getElementById('card-badge').textContent = `Group ${currentGroup}`;
-      document.getElementById('card-badge').style.background = groupColors[currentGroup];
-      document.getElementById('card-word-example').innerHTML = `<div class="cyrillic">${data.word}</div><div class="meaning">${data.wordLatin} = ${data.wordMeaning}</div>`;
-      document.getElementById('progress-fill').style.width = `${((currentCard + 1) / letterGroups[currentGroup].length) * 100}%`;
-      document.getElementById('progress-text').textContent = `Card ${currentCard + 1} of ${letterGroups[currentGroup].length}`;
-    }
-    
-    function updatePracticeWords() {
-      document.getElementById('word-list').innerHTML = practiceWords[currentGroup].map(w => `<div class="word-item"><div class="word-cyrillic">${w.cyrillic}</div><div class="word-info"><div class="word-latin">${w.latin}</div><div class="word-meaning">${w.meaning}</div></div></div>`).join('');
-    }
-    
-    // Flashcard all
-    document.getElementById('fc-prev-btn').addEventListener('click', () => { if (fcIndex > 0) { fcIndex--; document.getElementById('flashcard-all').classList.remove('flipped'); updateFlashcardAll(); } });
-    document.getElementById('fc-next-btn').addEventListener('click', () => { if (fcIndex < allLetters.length - 1) { fcIndex++; document.getElementById('flashcard-all').classList.remove('flipped'); updateFlashcardAll(); } });
-    document.getElementById('fc-restart-btn').addEventListener('click', () => { fcIndex = 0; document.getElementById('flashcard-all').classList.remove('flipped'); updateFlashcardAll(); });
-    document.getElementById('fc-shuffle-on').addEventListener('click', () => { fcShuffled = true; document.getElementById('fc-shuffle-on').classList.add('active'); document.getElementById('fc-shuffle-off').classList.remove('active'); allLetters.sort(() => Math.random() - 0.5); fcIndex = 0; document.getElementById('flashcard-all').classList.remove('flipped'); updateFlashcardAll(); });
-    document.getElementById('fc-shuffle-off').addEventListener('click', () => { fcShuffled = false; document.getElementById('fc-shuffle-off').classList.add('active'); document.getElementById('fc-shuffle-on').classList.remove('active'); initAllLetters(); fcIndex = 0; document.getElementById('flashcard-all').classList.remove('flipped'); updateFlashcardAll(); });
-    
-    function updateFlashcardAll() {
-      const data = allLetters[fcIndex];
-      document.getElementById('fc-letter').textContent = data.letter;
-      document.getElementById('fc-lowercase').textContent = data.lower;
-      document.getElementById('fc-sound').textContent = `"${data.sound}"`;
-      document.getElementById('fc-example').textContent = data.example;
-      document.getElementById('fc-trick').textContent = data.trick;
-      document.getElementById('fc-badge').textContent = `Group ${data.group}`;
-      document.getElementById('fc-badge').style.background = groupColors[data.group];
-      document.getElementById('fc-word-example').innerHTML = `<div class="cyrillic">${data.word}</div><div class="meaning">${data.wordLatin} = ${data.wordMeaning}</div>`;
-      document.getElementById('flashcard-counter').textContent = `${fcIndex + 1} / ${allLetters.length}`;
-    }
-    
-    // Quiz
-    function resetQuiz() {
-      quizLetters = quizGroup === 'all' ? Object.values(letterGroups).flat() : [...letterGroups[parseInt(quizGroup)]];
-      quizLetters.sort(() => Math.random() - 0.5);
-      quizIndex = 0; correctAnswers = 0; totalAnswers = 0;
-      document.getElementById('score').textContent = '0/0';
-      showQuizQuestion();
-    }
-    
-    function showQuizQuestion() {
-      if (quizIndex >= quizLetters.length) { quizIndex = 0; quizLetters.sort(() => Math.random() - 0.5); }
-      const current = quizLetters[quizIndex];
-      document.getElementById('quiz-letter').textContent = current.letter;
-      const allSounds = [...new Set(Object.values(letterGroups).flat().map(l => l.sound))];
-      const wrongSounds = allSounds.filter(s => s !== current.sound).sort(() => Math.random() - 0.5).slice(0, 3);
-      const options = [current.sound, ...wrongSounds].sort(() => Math.random() - 0.5);
-      document.getElementById('quiz-options').innerHTML = options.map(s => `<button class="quiz-option" data-sound="${s}">"${s}"</button>`).join('');
-      document.querySelectorAll('.quiz-option').forEach(btn => btn.addEventListener('click', () => checkAnswer(btn, current.sound)));
-    }
-    
-    function checkAnswer(btn, correctSound) {
-      totalAnswers++;
-      if (btn.dataset.sound === correctSound) correctAnswers++;
-      document.querySelectorAll('.quiz-option').forEach(b => { b.disabled = true; if (b.dataset.sound === correctSound) b.classList.add('correct'); else if (b === btn) b.classList.add('wrong'); });
-      document.getElementById('score').textContent = `${correctAnswers}/${totalAnswers}`;
-    }
-    
-    document.getElementById('next-quiz-btn').addEventListener('click', () => { quizIndex++; showQuizQuestion(); });
-    
-    // Reference
-    function renderReference() {
-      for (let g = 1; g <= 5; g++) {
-        document.getElementById(`ref-group${g}`).innerHTML = letterGroups[g].map(l => `<div class="letter-cell"><div class="cyrillic">${l.letter} ${l.lower}</div><div class="sound">"${l.sound}"</div></div>`).join('');
+      document.getElementById("next-btn").addEventListener("click", () => {
+        if (currentCard < letterGroups[currentGroup].length - 1) {
+          currentCard++;
+          document.getElementById("flashcard").classList.remove("flipped");
+          updateFlashcard();
+        }
+      });
+
+      function updateFlashcard() {
+        const data = letterGroups[currentGroup][currentCard];
+        document.getElementById("card-letter").textContent = data.letter;
+        document.getElementById("card-lowercase").textContent = data.lower;
+        document.getElementById("card-sound").textContent = `"${data.sound}"`;
+        document.getElementById("card-example").textContent = data.example;
+        document.getElementById("card-trick").textContent = data.trick;
+        document.getElementById(
+          "card-badge"
+        ).textContent = `Group ${currentGroup}`;
+        document.getElementById("card-badge").style.background =
+          groupColors[currentGroup];
+        document.getElementById(
+          "card-word-example"
+        ).innerHTML = `<div class="cyrillic">${data.word}</div><div class="meaning">${data.wordLatin} = ${data.wordMeaning}</div>`;
+        document.getElementById("progress-fill").style.width = `${
+          ((currentCard + 1) / letterGroups[currentGroup].length) * 100
+        }%`;
+        document.getElementById("progress-text").textContent = `Card ${
+          currentCard + 1
+        } of ${letterGroups[currentGroup].length}`;
       }
-    }
-    
-    // Vocabulary
-    function getVocabWords(cat) {
-      if (cat === 'all') return Object.values(vocabulary).flat();
-      return vocabulary[cat] || [];
-    }
-    
-    function renderVocab() {
-      const words = getVocabWords(currentCategory);
-      const search = document.getElementById('vocab-search').value.toLowerCase();
-      const filtered = words.filter(w => w.mk.toLowerCase().includes(search) || w.latin.toLowerCase().includes(search) || w.en.toLowerCase().includes(search));
-      document.getElementById('vocab-count').textContent = `${filtered.length} words`;
-      document.getElementById('vocab-grid').innerHTML = filtered.map(w => `<div class="vocab-card" onclick="this.classList.toggle('revealed')"><button class="speak-btn vocab-speak" onclick="event.stopPropagation(); speakMacedonian('${w.mk}')">🔊</button><div class="vocab-left"><div class="vocab-macedonian">${w.mk}</div><div class="vocab-latin">${w.latin}</div></div><div class="vocab-answer">${w.en}</div></div>`).join('');
-    }
-    
-    document.querySelectorAll('.category-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentCategory = tab.dataset.category;
-        renderVocab();
-        resetVocabQuiz();
-      });
-    });
-    
-    document.getElementById('vocab-search').addEventListener('input', renderVocab);
-    
-    document.getElementById('vocab-browse').addEventListener('click', () => {
-      document.getElementById('vocab-browse').classList.add('active');
-      document.getElementById('vocab-quiz-mode').classList.remove('active');
-      document.getElementById('vocab-browse-container').classList.remove('hidden');
-      document.getElementById('vocab-quiz-container').classList.add('hidden');
-    });
-    
-    document.getElementById('vocab-quiz-mode').addEventListener('click', () => {
-      document.getElementById('vocab-quiz-mode').classList.add('active');
-      document.getElementById('vocab-browse').classList.remove('active');
-      document.getElementById('vocab-browse-container').classList.add('hidden');
-      document.getElementById('vocab-quiz-container').classList.remove('hidden');
-      resetVocabQuiz();
-    });
-    
-    function resetVocabQuiz() {
-      vocabQuizWords = getVocabWords(currentCategory).sort(() => Math.random() - 0.5);
-      vocabQuizIndex = 0; vocabCorrect = 0; vocabTotal = 0;
-      document.getElementById('vocab-score').textContent = '0/0';
-      showVocabQuestion();
-    }
-    
-    function showVocabQuestion() {
-      if (vocabQuizIndex >= vocabQuizWords.length) { vocabQuizIndex = 0; vocabQuizWords.sort(() => Math.random() - 0.5); }
-      const word = vocabQuizWords[vocabQuizIndex];
-      document.getElementById('vq-word').textContent = word.mk;
-      document.getElementById('vq-latin').textContent = word.latin;
-      document.getElementById('vq-input').value = '';
-      document.getElementById('vq-input').classList.remove('correct', 'wrong');
-      document.getElementById('vq-feedback').classList.add('hidden');
-    }
-    
-    document.getElementById('vq-input').addEventListener('keypress', e => { if (e.key === 'Enter') checkVocabAnswer(); });
-    
-    document.getElementById('vq-show-btn').addEventListener('click', () => {
-      const word = vocabQuizWords[vocabQuizIndex];
-      const fb = document.getElementById('vq-feedback');
-      fb.textContent = `Answer: ${word.en}`;
-      fb.classList.remove('hidden', 'correct');
-      fb.classList.add('wrong');
-      document.getElementById('vq-input').classList.add('wrong');
-    });
-    
-    document.getElementById('vq-next-btn').addEventListener('click', () => { vocabQuizIndex++; showVocabQuestion(); });
-    
-    function checkVocabAnswer() {
-      const word = vocabQuizWords[vocabQuizIndex];
-      const input = document.getElementById('vq-input');
-      const fb = document.getElementById('vq-feedback');
-      vocabTotal++;
-      if (input.value.trim().toLowerCase() === word.en.toLowerCase()) {
-        vocabCorrect++;
-        input.classList.add('correct');
-        fb.textContent = '✓ Correct!';
-        fb.classList.remove('hidden', 'wrong');
-        fb.classList.add('correct');
-      } else {
-        input.classList.add('wrong');
-        fb.textContent = `✗ The answer is: ${word.en}`;
-        fb.classList.remove('hidden', 'correct');
-        fb.classList.add('wrong');
+
+      function updatePracticeWords() {
+        document.getElementById("word-list").innerHTML = practiceWords[
+          currentGroup
+        ]
+          .map(
+            (w) =>
+              `<div class="word-item"><div class="word-cyrillic">${w.cyrillic}</div><div class="word-info"><div class="word-latin">${w.latin}</div><div class="word-meaning">${w.meaning}</div></div></div>`
+          )
+          .join("");
       }
-      document.getElementById('vocab-score').textContent = `${vocabCorrect}/${vocabTotal}`;
-    }
-    
-    // Init
-    updateFlashcard();
-    updatePracticeWords();
-    resetQuiz();
-  </script>
-</body>
+
+      // Flashcard all
+      document.getElementById("fc-prev-btn").addEventListener("click", () => {
+        if (fcIndex > 0) {
+          fcIndex--;
+          document.getElementById("flashcard-all").classList.remove("flipped");
+          updateFlashcardAll();
+        }
+      });
+      document.getElementById("fc-next-btn").addEventListener("click", () => {
+        if (fcIndex < allLetters.length - 1) {
+          fcIndex++;
+          document.getElementById("flashcard-all").classList.remove("flipped");
+          updateFlashcardAll();
+        }
+      });
+      document
+        .getElementById("fc-restart-btn")
+        .addEventListener("click", () => {
+          fcIndex = 0;
+          document.getElementById("flashcard-all").classList.remove("flipped");
+          updateFlashcardAll();
+        });
+      document.getElementById("fc-shuffle-on").addEventListener("click", () => {
+        fcShuffled = true;
+        document.getElementById("fc-shuffle-on").classList.add("active");
+        document.getElementById("fc-shuffle-off").classList.remove("active");
+        allLetters.sort(() => Math.random() - 0.5);
+        fcIndex = 0;
+        document.getElementById("flashcard-all").classList.remove("flipped");
+        updateFlashcardAll();
+      });
+      document
+        .getElementById("fc-shuffle-off")
+        .addEventListener("click", () => {
+          fcShuffled = false;
+          document.getElementById("fc-shuffle-off").classList.add("active");
+          document.getElementById("fc-shuffle-on").classList.remove("active");
+          initAllLetters();
+          fcIndex = 0;
+          document.getElementById("flashcard-all").classList.remove("flipped");
+          updateFlashcardAll();
+        });
+
+      function updateFlashcardAll() {
+        const data = allLetters[fcIndex];
+        document.getElementById("fc-letter").textContent = data.letter;
+        document.getElementById("fc-lowercase").textContent = data.lower;
+        document.getElementById("fc-sound").textContent = `"${data.sound}"`;
+        document.getElementById("fc-example").textContent = data.example;
+        document.getElementById("fc-trick").textContent = data.trick;
+        document.getElementById("fc-badge").textContent = `Group ${data.group}`;
+        document.getElementById("fc-badge").style.background =
+          groupColors[data.group];
+        document.getElementById(
+          "fc-word-example"
+        ).innerHTML = `<div class="cyrillic">${data.word}</div><div class="meaning">${data.wordLatin} = ${data.wordMeaning}</div>`;
+        document.getElementById("flashcard-counter").textContent = `${
+          fcIndex + 1
+        } / ${allLetters.length}`;
+      }
+
+      // Quiz
+      function resetQuiz() {
+        quizLetters =
+          quizGroup === "all"
+            ? Object.values(letterGroups).flat()
+            : [...letterGroups[parseInt(quizGroup)]];
+        quizLetters.sort(() => Math.random() - 0.5);
+        quizIndex = 0;
+        correctAnswers = 0;
+        totalAnswers = 0;
+        document.getElementById("score").textContent = "0/0";
+        showQuizQuestion();
+      }
+
+      function showQuizQuestion() {
+        if (quizIndex >= quizLetters.length) {
+          quizIndex = 0;
+          quizLetters.sort(() => Math.random() - 0.5);
+        }
+        const current = quizLetters[quizIndex];
+        document.getElementById("quiz-letter").textContent = current.letter;
+        const allSounds = [
+          ...new Set(
+            Object.values(letterGroups)
+              .flat()
+              .map((l) => l.sound)
+          ),
+        ];
+        const wrongSounds = allSounds
+          .filter((s) => s !== current.sound)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+        const options = [current.sound, ...wrongSounds].sort(
+          () => Math.random() - 0.5
+        );
+        document.getElementById("quiz-options").innerHTML = options
+          .map(
+            (s) =>
+              `<button class="quiz-option" data-sound="${s}">"${s}"</button>`
+          )
+          .join("");
+        document
+          .querySelectorAll(".quiz-option")
+          .forEach((btn) =>
+            btn.addEventListener("click", () => checkAnswer(btn, current.sound))
+          );
+      }
+
+      function checkAnswer(btn, correctSound) {
+        totalAnswers++;
+        if (btn.dataset.sound === correctSound) correctAnswers++;
+        document.querySelectorAll(".quiz-option").forEach((b) => {
+          b.disabled = true;
+          if (b.dataset.sound === correctSound) b.classList.add("correct");
+          else if (b === btn) b.classList.add("wrong");
+        });
+        document.getElementById(
+          "score"
+        ).textContent = `${correctAnswers}/${totalAnswers}`;
+      }
+
+      document.getElementById("next-quiz-btn").addEventListener("click", () => {
+        quizIndex++;
+        showQuizQuestion();
+      });
+
+      // Reference
+      function renderReference() {
+        for (let g = 1; g <= 5; g++) {
+          document.getElementById(`ref-group${g}`).innerHTML = letterGroups[g]
+            .map(
+              (l) =>
+                `<div class="letter-cell"><div class="cyrillic">${l.letter} ${l.lower}</div><div class="sound">"${l.sound}"</div></div>`
+            )
+            .join("");
+        }
+      }
+
+      // Vocabulary
+      function getVocabWords(cat) {
+        if (cat === "all") return Object.values(vocabulary).flat();
+        return vocabulary[cat] || [];
+      }
+
+      function renderVocab() {
+        const words = getVocabWords(currentCategory);
+        const search = document
+          .getElementById("vocab-search")
+          .value.toLowerCase();
+        const filtered = words.filter(
+          (w) =>
+            w.mk.toLowerCase().includes(search) ||
+            w.latin.toLowerCase().includes(search) ||
+            w.en.toLowerCase().includes(search)
+        );
+        document.getElementById(
+          "vocab-count"
+        ).textContent = `${filtered.length} words`;
+        document.getElementById("vocab-grid").innerHTML = filtered
+          .map(
+            (w) =>
+              `<div class="vocab-card" onclick="this.classList.toggle('revealed')"><button class="speak-btn vocab-speak" onclick="event.stopPropagation(); speakMacedonian('${w.mk}')">🔊</button><div class="vocab-left"><div class="vocab-macedonian">${w.mk}</div><div class="vocab-latin">${w.latin}</div></div><div class="vocab-answer">${w.en}</div></div>`
+          )
+          .join("");
+      }
+
+      document.querySelectorAll(".category-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document
+            .querySelectorAll(".category-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+          currentCategory = tab.dataset.category;
+          renderVocab();
+          resetVocabQuiz();
+        });
+      });
+
+      document
+        .getElementById("vocab-search")
+        .addEventListener("input", renderVocab);
+
+      document.getElementById("vocab-browse").addEventListener("click", () => {
+        document.getElementById("vocab-browse").classList.add("active");
+        document.getElementById("vocab-quiz-mode").classList.remove("active");
+        document
+          .getElementById("vocab-browse-container")
+          .classList.remove("hidden");
+        document.getElementById("vocab-quiz-container").classList.add("hidden");
+      });
+
+      document
+        .getElementById("vocab-quiz-mode")
+        .addEventListener("click", () => {
+          document.getElementById("vocab-quiz-mode").classList.add("active");
+          document.getElementById("vocab-browse").classList.remove("active");
+          document
+            .getElementById("vocab-browse-container")
+            .classList.add("hidden");
+          document
+            .getElementById("vocab-quiz-container")
+            .classList.remove("hidden");
+          resetVocabQuiz();
+        });
+
+      function resetVocabQuiz() {
+        vocabQuizWords = getVocabWords(currentCategory).sort(
+          () => Math.random() - 0.5
+        );
+        vocabQuizIndex = 0;
+        vocabCorrect = 0;
+        vocabTotal = 0;
+        document.getElementById("vocab-score").textContent = "0/0";
+        showVocabQuestion();
+      }
+
+      function showVocabQuestion() {
+        if (vocabQuizIndex >= vocabQuizWords.length) {
+          vocabQuizIndex = 0;
+          vocabQuizWords.sort(() => Math.random() - 0.5);
+        }
+        const word = vocabQuizWords[vocabQuizIndex];
+        document.getElementById("vq-word").textContent = word.mk;
+        document.getElementById("vq-latin").textContent = word.latin;
+        document.getElementById("vq-input").value = "";
+        document
+          .getElementById("vq-input")
+          .classList.remove("correct", "wrong");
+        document.getElementById("vq-feedback").classList.add("hidden");
+      }
+
+      document.getElementById("vq-input").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") checkVocabAnswer();
+      });
+
+      document.getElementById("vq-show-btn").addEventListener("click", () => {
+        const word = vocabQuizWords[vocabQuizIndex];
+        const fb = document.getElementById("vq-feedback");
+        fb.textContent = `Answer: ${word.en}`;
+        fb.classList.remove("hidden", "correct");
+        fb.classList.add("wrong");
+        document.getElementById("vq-input").classList.add("wrong");
+      });
+
+      document.getElementById("vq-next-btn").addEventListener("click", () => {
+        vocabQuizIndex++;
+        showVocabQuestion();
+      });
+
+      function checkVocabAnswer() {
+        const word = vocabQuizWords[vocabQuizIndex];
+        const input = document.getElementById("vq-input");
+        const fb = document.getElementById("vq-feedback");
+        vocabTotal++;
+        if (input.value.trim().toLowerCase() === word.en.toLowerCase()) {
+          vocabCorrect++;
+          input.classList.add("correct");
+          fb.textContent = "✓ Correct!";
+          fb.classList.remove("hidden", "wrong");
+          fb.classList.add("correct");
+        } else {
+          input.classList.add("wrong");
+          fb.textContent = `✗ The answer is: ${word.en}`;
+          fb.classList.remove("hidden", "correct");
+          fb.classList.add("wrong");
+        }
+        document.getElementById(
+          "vocab-score"
+        ).textContent = `${vocabCorrect}/${vocabTotal}`;
+      }
+
+      // Init
+      updateFlashcard();
+      updatePracticeWords();
+      resetQuiz();
+    </script>
+  </body>
 </html>
