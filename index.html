@@ -984,8 +984,8 @@
 
         <div id="quiz-summary" class="hidden">
           <div class="score-display">
-            <div class="score-number" id="summary-score">0/0</div>
-            <div class="score-label">Final Score</div>
+            <div class="score-number" id="summary-score">0%</div>
+            <div class="score-label">Accuracy</div>
           </div>
           <div id="summary-content"></div>
           <div class="controls">
@@ -1036,7 +1036,12 @@
 
         <div class="toggle-row">
           <button class="toggle-btn active" id="vocab-browse">Browse</button>
-          <button class="toggle-btn" id="vocab-quiz-mode">Quiz Mode</button>
+          <button class="toggle-btn" id="vocab-quiz-english">
+            English Quiz
+          </button>
+          <button class="toggle-btn" id="vocab-quiz-macedonian">
+            Macedonian Quiz
+          </button>
         </div>
 
         <div id="vocab-browse-container">
@@ -1053,14 +1058,16 @@
           <div class="vocab-quiz-card">
             <button
               class="speak-btn"
-              onclick="speakMacedonian(vocabQuizWords[vocabQuizIndex].mk)"
-              style="margin: 0 auto 16px"
+              id="vq-speak-btn"
+              style="margin: 0 auto 16px; display: flex"
             >
               🔊
             </button>
             <div class="vocab-quiz-word" id="vq-word">МАЧКА</div>
             <div class="vocab-quiz-latin" id="vq-latin">mačka</div>
-            <div class="vocab-quiz-prompt">What does this word mean?</div>
+            <div class="vocab-quiz-prompt" id="vq-prompt">
+              What does this word mean?
+            </div>
             <input
               type="text"
               class="vocab-input"
@@ -1068,6 +1075,15 @@
               placeholder="Type the English meaning..."
             />
             <div class="vocab-feedback hidden" id="vq-feedback"></div>
+            <div class="controls" style="margin-top: 16px">
+              <button
+                class="btn btn-primary"
+                id="vq-submit-btn"
+                style="width: 100%"
+              >
+                Submit Answer
+              </button>
+            </div>
           </div>
 
           <div class="controls">
@@ -1687,11 +1703,10 @@
         currentCard = 0,
         quizGroup = 1,
         quizIndex = 0,
-        correctAnswers = 0,
-        totalAnswers = 0,
         quizLetters = [],
-        incorrectLetters = [],
-        quizAnsweredLetters = [];
+        quizCorrectlyAnswered = [], // Track which letters were answered correctly
+        quizWrongLetters = {}, // Track which letters were answered wrong (letter -> letter data)
+        quizAnsweredLetters = []; // Track all answered letters (to prevent showing them again)
       let allLetters = [],
         fcIndex = 0,
         fcShuffled = false,
@@ -1701,7 +1716,8 @@
         vocabQuizWords = [],
         vocabQuizIndex = 0,
         vocabCorrect = 0,
-        vocabTotal = 0;
+        vocabTotal = 0,
+        vocabQuizMode = "english"; // "english" or "macedonian"
 
       const groupColors = {
         1: "#3b82f6",
@@ -1801,6 +1817,7 @@
             updateFlashcardFiltered();
             updateFlashcardAll();
           }
+          if (view === "quiz") resetQuiz();
           if (view === "vocab") renderVocab();
         });
       });
@@ -1975,57 +1992,75 @@
 
       // Quiz
       function resetQuiz() {
+        // Ensure quizGroup is set
+        if (!quizGroup) {
+          quizGroup = "1";
+        }
+
         quizLetters =
           quizGroup === "all"
             ? Object.values(letterGroups).flat()
             : [...letterGroups[parseInt(quizGroup)]];
         quizLetters.sort(() => Math.random() - 0.5);
         quizIndex = 0;
-        correctAnswers = 0;
-        totalAnswers = 0;
-        incorrectLetters = [];
+        quizCorrectlyAnswered = [];
+        quizWrongLetters = {};
         quizAnsweredLetters = [];
-        document.getElementById("score").textContent = "0/0";
-        document.getElementById("quiz-summary").classList.add("hidden");
-        document.getElementById("quiz-question").classList.remove("hidden");
-        document.getElementById("quiz-options").classList.remove("hidden");
-        document
-          .getElementById("score")
-          .parentElement.classList.remove("hidden");
+
+        const scoreEl = document.getElementById("score");
+        const summaryEl = document.getElementById("quiz-summary");
+        const questionEl = document.getElementById("quiz-question");
+        const optionsEl = document.getElementById("quiz-options");
+        const scoreDisplayEl = scoreEl?.parentElement;
+
+        if (scoreEl) {
+          const total = quizLetters.length;
+          scoreEl.textContent = `0/${total}`;
+        }
+        if (summaryEl) summaryEl.classList.add("hidden");
+        if (questionEl) questionEl.classList.remove("hidden");
+        if (optionsEl) optionsEl.classList.remove("hidden");
+        if (scoreDisplayEl) scoreDisplayEl.classList.remove("hidden");
+
         showQuizQuestion();
       }
 
       function showQuizQuestion() {
-        // Clear any existing timeout
-        if (autoAdvanceTimeout) {
-          clearTimeout(autoAdvanceTimeout);
-          autoAdvanceTimeout = null;
+        // Check if quizLetters is empty or invalid
+        if (!quizLetters || quizLetters.length === 0) {
+          console.error("quizLetters is empty");
+          return;
         }
 
-        // Check if all letters have been answered
+        // Check if all letters have been answered (correctly or incorrectly)
         if (quizAnsweredLetters.length >= quizLetters.length) {
           showQuizSummary();
           return;
         }
 
-        // Find next unanswered letter from shuffled list
-        let current = null;
-        while (quizIndex < quizLetters.length) {
-          const letter = quizLetters[quizIndex];
-          if (!quizAnsweredLetters.includes(letter.letter)) {
-            current = letter;
-            break;
-          }
-          quizIndex++;
-        }
+        // Get a random letter that hasn't been answered yet
+        const remainingLetters = quizLetters.filter(
+          (l) => !quizAnsweredLetters.includes(l.letter)
+        );
 
-        // If we couldn't find an unanswered letter, show summary
-        if (!current) {
+        if (remainingLetters.length === 0) {
           showQuizSummary();
           return;
         }
 
-        document.getElementById("quiz-letter").textContent = current.letter;
+        // Pick a random letter from remaining
+        const randomIndex = Math.floor(Math.random() * remainingLetters.length);
+        const current = remainingLetters[randomIndex];
+
+        const quizLetterEl = document.getElementById("quiz-letter");
+        const quizOptionsEl = document.getElementById("quiz-options");
+
+        if (!quizLetterEl || !quizOptionsEl) {
+          console.error("Quiz elements not found");
+          return;
+        }
+
+        quizLetterEl.textContent = current.letter;
         const allSounds = [
           ...new Set(
             Object.values(letterGroups)
@@ -2040,98 +2075,150 @@
         const options = [current.sound, ...wrongSounds].sort(
           () => Math.random() - 0.5
         );
-        document.getElementById("quiz-options").innerHTML = options
+
+        quizOptionsEl.innerHTML = options
           .map(
             (s) =>
               `<button class="quiz-option" data-sound="${s}">"${s}"</button>`
           )
           .join("");
-        document
-          .querySelectorAll(".quiz-option")
-          .forEach((btn) =>
-            btn.addEventListener("click", () => checkAnswer(btn, current))
-          );
+
+        // Attach event listeners to the new buttons
+        quizOptionsEl.querySelectorAll(".quiz-option").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            checkAnswer(btn, current);
+          });
+        });
       }
 
-      let autoAdvanceTimeout = null;
-
       function checkAnswer(btn, currentLetter) {
-        // Clear any existing timeout
-        if (autoAdvanceTimeout) {
-          clearTimeout(autoAdvanceTimeout);
-        }
-
         const correctSound = currentLetter.sound;
-        totalAnswers++;
         const isCorrect = btn.dataset.sound === correctSound;
 
-        if (isCorrect) {
-          correctAnswers++;
-        } else {
-          // Track incorrect answer
-          incorrectLetters.push({
-            letter: currentLetter.letter,
-            lower: currentLetter.lower,
-            sound: currentLetter.sound,
-            example: currentLetter.example,
-            word: currentLetter.word,
-            wordLatin: currentLetter.wordLatin,
-            wordMeaning: currentLetter.wordMeaning,
-          });
-        }
+        // Disable all options
+        document.querySelectorAll(".quiz-option").forEach((b) => {
+          b.disabled = true;
+        });
 
-        // Mark this letter as answered
+        // Mark this letter as answered (whether correct or wrong)
         if (!quizAnsweredLetters.includes(currentLetter.letter)) {
           quizAnsweredLetters.push(currentLetter.letter);
         }
 
-        // Disable all options and show feedback
-        document.querySelectorAll(".quiz-option").forEach((b) => {
-          b.disabled = true;
-          if (b.dataset.sound === correctSound) b.classList.add("correct");
-          else if (b === btn) b.classList.add("wrong");
-        });
+        if (isCorrect) {
+          // Mark this letter as correctly answered
+          if (!quizCorrectlyAnswered.includes(currentLetter.letter)) {
+            quizCorrectlyAnswered.push(currentLetter.letter);
+          }
 
-        document.getElementById(
-          "score"
-        ).textContent = `${correctAnswers}/${totalAnswers}`;
+          // Remove from wrong letters if it was there
+          delete quizWrongLetters[currentLetter.letter];
 
-        // Auto-advance after 2.5 seconds
-        autoAdvanceTimeout = setTimeout(() => {
-          quizIndex++;
-          showQuizQuestion();
-        }, 2500);
+          // Show correct feedback
+          btn.classList.add("correct");
+
+          // Update score
+          const scoreEl = document.getElementById("score");
+          if (scoreEl) {
+            scoreEl.textContent = `${quizCorrectlyAnswered.length}/${quizLetters.length}`;
+          }
+
+          // Advance to next question after a brief delay
+          setTimeout(() => {
+            showQuizQuestion();
+          }, 1500);
+        } else {
+          // Wrong answer - mark as wrong and show correct answer
+          btn.classList.add("wrong");
+
+          // Highlight the correct answer in green
+          document.querySelectorAll(".quiz-option").forEach((b) => {
+            if (b.dataset.sound === correctSound) {
+              b.classList.add("correct");
+            }
+          });
+
+          // Track this letter as wrong (only once per letter)
+          if (!quizWrongLetters[currentLetter.letter]) {
+            quizWrongLetters[currentLetter.letter] = {
+              letter: currentLetter.letter,
+              lower: currentLetter.lower,
+              sound: currentLetter.sound,
+              example: currentLetter.example,
+              word: currentLetter.word,
+              wordLatin: currentLetter.wordLatin,
+              wordMeaning: currentLetter.wordMeaning,
+            };
+          }
+
+          // Update score (don't add to correct count)
+          const scoreEl = document.getElementById("score");
+          if (scoreEl) {
+            scoreEl.textContent = `${quizCorrectlyAnswered.length}/${quizLetters.length}`;
+          }
+
+          // Advance to next question after showing the correct answer
+          setTimeout(() => {
+            showQuizQuestion();
+          }, 2000);
+        }
       }
 
       function showQuizSummary() {
         // Hide quiz question and options
-        document.getElementById("quiz-question").classList.add("hidden");
-        document.getElementById("quiz-options").classList.add("hidden");
-        document.getElementById("score").parentElement.classList.add("hidden");
+        const questionEl = document.getElementById("quiz-question");
+        const optionsEl = document.getElementById("quiz-options");
+        const scoreEl = document.getElementById("score");
+        const summaryEl = document.getElementById("quiz-summary");
+        const summaryScoreEl = document.getElementById("summary-score");
+
+        if (questionEl) questionEl.classList.add("hidden");
+        if (optionsEl) optionsEl.classList.add("hidden");
+        if (scoreEl && scoreEl.parentElement) {
+          scoreEl.parentElement.classList.add("hidden");
+        }
 
         // Show summary
-        document.getElementById("quiz-summary").classList.remove("hidden");
-        document.getElementById(
-          "summary-score"
-        ).textContent = `${correctAnswers}/${totalAnswers}`;
+        if (summaryEl) summaryEl.classList.remove("hidden");
+
+        // Calculate percentage accuracy (per character)
+        const total = quizLetters.length;
+        const correct = quizCorrectlyAnswered.length;
+        const wrongCount = Object.keys(quizWrongLetters).length;
+        const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+        // Update the percentage display
+        if (summaryScoreEl) {
+          summaryScoreEl.textContent = `${percentage}%`;
+          // Ensure parent score-display is visible
+          const scoreDisplayEl = summaryScoreEl.closest(".score-display");
+          if (scoreDisplayEl) {
+            scoreDisplayEl.style.display = "block";
+          }
+        } else {
+          console.error("summary-score element not found");
+        }
 
         let summaryHTML = "";
 
-        if (incorrectLetters.length === 0) {
+        if (wrongCount === 0) {
           summaryHTML = `
             <div class="score-display" style="background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); margin-bottom: 24px;">
               <div style="font-size: 2rem; margin-bottom: 12px;">🎉 Perfect!</div>
-              <div style="color: var(--success); font-size: 1.1rem;">You got all answers correct!</div>
+              <div style="color: var(--success); font-size: 1.1rem;">You got all ${total} characters correct!</div>
             </div>
           `;
         } else {
+          const wrongLettersArray = Object.values(quizWrongLetters);
           summaryHTML = `
             <div style="background: var(--card-bg); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
               <h3 style="color: var(--accent); margin-bottom: 16px; font-size: 1.2rem;">
-                Letters to Review (${incorrectLetters.length})
+                Letters to Review (${wrongCount})
               </h3>
               <div style="display: grid; gap: 12px;">
-                ${incorrectLetters
+                ${wrongLettersArray
                   .map(
                     (letter) => `
                   <div style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 16px; border-left: 4px solid var(--error);">
@@ -2155,7 +2242,10 @@
           `;
         }
 
-        document.getElementById("summary-content").innerHTML = summaryHTML;
+        const summaryContentEl = document.getElementById("summary-content");
+        if (summaryContentEl) {
+          summaryContentEl.innerHTML = summaryHTML;
+        }
       }
 
       document
@@ -2237,7 +2327,12 @@
 
       document.getElementById("vocab-browse").addEventListener("click", () => {
         document.getElementById("vocab-browse").classList.add("active");
-        document.getElementById("vocab-quiz-mode").classList.remove("active");
+        document
+          .getElementById("vocab-quiz-english")
+          .classList.remove("active");
+        document
+          .getElementById("vocab-quiz-macedonian")
+          .classList.remove("active");
         document
           .getElementById("vocab-browse-container")
           .classList.remove("hidden");
@@ -2245,10 +2340,34 @@
       });
 
       document
-        .getElementById("vocab-quiz-mode")
+        .getElementById("vocab-quiz-english")
         .addEventListener("click", () => {
-          document.getElementById("vocab-quiz-mode").classList.add("active");
+          vocabQuizMode = "english";
+          document.getElementById("vocab-quiz-english").classList.add("active");
           document.getElementById("vocab-browse").classList.remove("active");
+          document
+            .getElementById("vocab-quiz-macedonian")
+            .classList.remove("active");
+          document
+            .getElementById("vocab-browse-container")
+            .classList.add("hidden");
+          document
+            .getElementById("vocab-quiz-container")
+            .classList.remove("hidden");
+          resetVocabQuiz();
+        });
+
+      document
+        .getElementById("vocab-quiz-macedonian")
+        .addEventListener("click", () => {
+          vocabQuizMode = "macedonian";
+          document
+            .getElementById("vocab-quiz-macedonian")
+            .classList.add("active");
+          document.getElementById("vocab-browse").classList.remove("active");
+          document
+            .getElementById("vocab-quiz-english")
+            .classList.remove("active");
           document
             .getElementById("vocab-browse-container")
             .classList.add("hidden");
@@ -2275,12 +2394,37 @@
           vocabQuizWords.sort(() => Math.random() - 0.5);
         }
         const word = vocabQuizWords[vocabQuizIndex];
-        document.getElementById("vq-word").textContent = word.mk;
-        document.getElementById("vq-latin").textContent = word.latin;
-        document.getElementById("vq-input").value = "";
-        document
-          .getElementById("vq-input")
-          .classList.remove("correct", "wrong");
+        const wordEl = document.getElementById("vq-word");
+        const latinEl = document.getElementById("vq-latin");
+        const promptEl = document.getElementById("vq-prompt");
+        const inputEl = document.getElementById("vq-input");
+        const speakBtn = document.getElementById("vq-speak-btn");
+
+        if (vocabQuizMode === "english") {
+          // English Quiz: Show Macedonian word
+          wordEl.textContent = word.mk;
+          latinEl.textContent = word.latin;
+          latinEl.style.display = "block";
+          promptEl.textContent = "What does this word mean?";
+          inputEl.placeholder = "Type the English meaning...";
+          if (speakBtn) {
+            speakBtn.style.display = "flex";
+            speakBtn.onclick = () => speakMacedonian(word.mk);
+          }
+        } else {
+          // Macedonian Quiz: Show English word
+          wordEl.textContent = word.en;
+          latinEl.style.display = "none";
+          promptEl.textContent = "What is this word in Macedonian?";
+          inputEl.placeholder = "Type in Macedonian (Cyrillic or latin)...";
+          if (speakBtn) {
+            speakBtn.style.display = "none";
+            speakBtn.onclick = null;
+          }
+        }
+
+        inputEl.value = "";
+        inputEl.classList.remove("correct", "wrong");
         document.getElementById("vq-feedback").classList.add("hidden");
       }
 
@@ -2288,10 +2432,18 @@
         if (e.key === "Enter") checkVocabAnswer();
       });
 
+      document.getElementById("vq-submit-btn").addEventListener("click", () => {
+        checkVocabAnswer();
+      });
+
       document.getElementById("vq-show-btn").addEventListener("click", () => {
         const word = vocabQuizWords[vocabQuizIndex];
         const fb = document.getElementById("vq-feedback");
-        fb.textContent = `Answer: ${word.en}`;
+        if (vocabQuizMode === "english") {
+          fb.textContent = `Answer: ${word.en}`;
+        } else {
+          fb.textContent = `Answer: ${word.mk} (${word.latin})`;
+        }
         fb.classList.remove("hidden", "correct");
         fb.classList.add("wrong");
         document.getElementById("vq-input").classList.add("wrong");
@@ -2307,7 +2459,22 @@
         const input = document.getElementById("vq-input");
         const fb = document.getElementById("vq-feedback");
         vocabTotal++;
-        if (input.value.trim().toLowerCase() === word.en.toLowerCase()) {
+
+        let isCorrect = false;
+
+        if (vocabQuizMode === "english") {
+          // English Quiz: Check if input matches English meaning
+          isCorrect =
+            input.value.trim().toLowerCase() === word.en.toLowerCase();
+        } else {
+          // Macedonian Quiz: Check if input matches either Cyrillic or latin transcription
+          const userInput = input.value.trim().toLowerCase();
+          const cyrillicMatch = word.mk.toLowerCase() === userInput;
+          const latinMatch = word.latin.toLowerCase() === userInput;
+          isCorrect = cyrillicMatch || latinMatch;
+        }
+
+        if (isCorrect) {
           vocabCorrect++;
           input.classList.add("correct");
           fb.textContent = "✓ Correct!";
@@ -2315,7 +2482,11 @@
           fb.classList.add("correct");
         } else {
           input.classList.add("wrong");
-          fb.textContent = `✗ The answer is: ${word.en}`;
+          if (vocabQuizMode === "english") {
+            fb.textContent = `✗ The answer is: ${word.en}`;
+          } else {
+            fb.textContent = `✗ The answer is: ${word.mk} (${word.latin})`;
+          }
           fb.classList.remove("hidden", "correct");
           fb.classList.add("wrong");
         }
@@ -2327,7 +2498,7 @@
       // Init
       updateFlashcard();
       updatePracticeWords();
-      resetQuiz();
+      // Don't initialize quiz on page load - it will be initialized when quiz view is shown
       updateFlashcardFiltered();
     </script>
   </body>
