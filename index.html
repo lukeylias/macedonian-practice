@@ -494,11 +494,10 @@
 
       .category-tabs {
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
         margin-bottom: 20px;
-        overflow-x: auto;
         padding-bottom: 8px;
-        -webkit-overflow-scrolling: touch;
       }
 
       .category-tab {
@@ -556,7 +555,7 @@
         font-weight: 600;
       }
       .vocab-latin {
-        font-size: 0.85rem;
+        font-size: 1rem;
         color: var(--text-muted);
       }
       .vocab-answer {
@@ -844,6 +843,39 @@
           <span class="vocab-stats" id="flashcard-counter">1 / 31</span>
         </div>
 
+        <div class="groups" id="fc-groups">
+          <div class="group-card selected" data-group="1" data-fc="true">
+            <h3>Group 1</h3>
+            <div class="letters">А Е К М О Т</div>
+            <div class="count">6 letters</div>
+          </div>
+          <div class="group-card" data-group="2" data-fc="true">
+            <h3>Group 2</h3>
+            <div class="letters">В Н Р С У Х Ј</div>
+            <div class="count">7 letters</div>
+          </div>
+          <div class="group-card" data-group="3" data-fc="true">
+            <h3>Group 3</h3>
+            <div class="letters">Б Г Д З И Л П Ф Ш</div>
+            <div class="count">9 letters</div>
+          </div>
+          <div class="group-card" data-group="4" data-fc="true">
+            <h3>Group 4</h3>
+            <div class="letters">Ж Ц Ч Џ Ѕ</div>
+            <div class="count">5 letters</div>
+          </div>
+          <div class="group-card" data-group="5" data-fc="true">
+            <h3>Group 5</h3>
+            <div class="letters">Ѓ Ќ Љ Њ</div>
+            <div class="count">4 letters</div>
+          </div>
+          <div class="group-card" data-group="all" data-fc="true">
+            <h3>All Groups</h3>
+            <div class="letters">А — Ш</div>
+            <div class="count">31 letters</div>
+          </div>
+        </div>
+
         <div class="toggle-row">
           <button class="toggle-btn active" id="fc-shuffle-off">
             In Order
@@ -868,7 +900,8 @@
             <div class="flashcard-face flashcard-back">
               <button
                 class="speak-btn flashcard-speak"
-                onclick="event.stopPropagation(); speakMacedonian(allLetters[fcIndex].word)"
+                id="fc-speak-word"
+                onclick="event.stopPropagation(); if (fcFilteredLetters.length > 0 && fcFilteredLetters[fcIndex]) speakMacedonian(fcFilteredLetters[fcIndex].word)"
               >
                 🔊
               </button>
@@ -943,10 +976,26 @@
 
         <div class="quiz-options" id="quiz-options"></div>
 
-        <div class="controls">
+        <div class="controls hidden" id="quiz-controls">
           <button class="btn btn-primary" id="next-quiz-btn">
             Next Question →
           </button>
+        </div>
+
+        <div id="quiz-summary" class="hidden">
+          <div class="score-display">
+            <div class="score-number" id="summary-score">0/0</div>
+            <div class="score-label">Final Score</div>
+          </div>
+          <div id="summary-content"></div>
+          <div class="controls">
+            <button class="btn btn-secondary" id="restart-quiz-btn">
+              🔄 Restart Quiz
+            </button>
+            <button class="btn btn-primary" id="new-group-btn">
+              New Group →
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1640,10 +1689,14 @@
         quizIndex = 0,
         correctAnswers = 0,
         totalAnswers = 0,
-        quizLetters = [];
+        quizLetters = [],
+        incorrectLetters = [],
+        quizAnsweredLetters = [];
       let allLetters = [],
         fcIndex = 0,
-        fcShuffled = false;
+        fcShuffled = false,
+        fcSelectedGroup = "all",
+        fcFilteredLetters = [];
       let currentCategory = "all",
         vocabQuizWords = [],
         vocabQuizIndex = 0,
@@ -1711,6 +1764,25 @@
       }
       initAllLetters();
 
+      function getFilteredFlashcardLetters() {
+        if (fcSelectedGroup === "all") {
+          return [...allLetters];
+        } else {
+          const groupNum = parseInt(fcSelectedGroup);
+          return letterGroups[groupNum].map((l) => ({ ...l, group: groupNum }));
+        }
+      }
+
+      function updateFlashcardFiltered() {
+        fcFilteredLetters = getFilteredFlashcardLetters();
+        if (fcShuffled) {
+          fcFilteredLetters.sort(() => Math.random() - 0.5);
+        }
+        if (fcIndex >= fcFilteredLetters.length) {
+          fcIndex = 0;
+        }
+      }
+
       // View switching
       document.querySelectorAll(".tab").forEach((tab) => {
         tab.addEventListener("click", () => {
@@ -1725,7 +1797,10 @@
               .classList.toggle("hidden", v !== view);
           });
           if (view === "reference") renderReference();
-          if (view === "flashcards") updateFlashcardAll();
+          if (view === "flashcards") {
+            updateFlashcardFiltered();
+            updateFlashcardAll();
+          }
           if (view === "vocab") renderVocab();
         });
       });
@@ -1756,6 +1831,21 @@
           card.classList.add("selected");
           quizGroup = card.dataset.group;
           resetQuiz();
+        });
+      });
+
+      // Flashcard group selection
+      document.querySelectorAll(".group-card[data-fc]").forEach((card) => {
+        card.addEventListener("click", () => {
+          document
+            .querySelectorAll(".group-card[data-fc]")
+            .forEach((c) => c.classList.remove("selected"));
+          card.classList.add("selected");
+          fcSelectedGroup = card.dataset.group;
+          fcIndex = 0;
+          updateFlashcardFiltered();
+          document.getElementById("flashcard-all").classList.remove("flipped");
+          updateFlashcardAll();
         });
       });
 
@@ -1828,7 +1918,7 @@
         }
       });
       document.getElementById("fc-next-btn").addEventListener("click", () => {
-        if (fcIndex < allLetters.length - 1) {
+        if (fcIndex < fcFilteredLetters.length - 1) {
           fcIndex++;
           document.getElementById("flashcard-all").classList.remove("flipped");
           updateFlashcardAll();
@@ -1845,7 +1935,7 @@
         fcShuffled = true;
         document.getElementById("fc-shuffle-on").classList.add("active");
         document.getElementById("fc-shuffle-off").classList.remove("active");
-        allLetters.sort(() => Math.random() - 0.5);
+        updateFlashcardFiltered();
         fcIndex = 0;
         document.getElementById("flashcard-all").classList.remove("flipped");
         updateFlashcardAll();
@@ -1856,14 +1946,17 @@
           fcShuffled = false;
           document.getElementById("fc-shuffle-off").classList.add("active");
           document.getElementById("fc-shuffle-on").classList.remove("active");
-          initAllLetters();
+          updateFlashcardFiltered();
           fcIndex = 0;
           document.getElementById("flashcard-all").classList.remove("flipped");
           updateFlashcardAll();
         });
 
       function updateFlashcardAll() {
-        const data = allLetters[fcIndex];
+        if (fcFilteredLetters.length === 0) {
+          updateFlashcardFiltered();
+        }
+        const data = fcFilteredLetters[fcIndex];
         document.getElementById("fc-letter").textContent = data.letter;
         document.getElementById("fc-lowercase").textContent = data.lower;
         document.getElementById("fc-sound").textContent = `"${data.sound}"`;
@@ -1877,7 +1970,7 @@
         ).innerHTML = `<div class="cyrillic">${data.word}</div><div class="meaning">${data.wordLatin} = ${data.wordMeaning}</div>`;
         document.getElementById("flashcard-counter").textContent = `${
           fcIndex + 1
-        } / ${allLetters.length}`;
+        } / ${fcFilteredLetters.length}`;
       }
 
       // Quiz
@@ -1890,16 +1983,48 @@
         quizIndex = 0;
         correctAnswers = 0;
         totalAnswers = 0;
+        incorrectLetters = [];
+        quizAnsweredLetters = [];
         document.getElementById("score").textContent = "0/0";
+        document.getElementById("quiz-summary").classList.add("hidden");
+        document.getElementById("quiz-question").classList.remove("hidden");
+        document.getElementById("quiz-options").classList.remove("hidden");
+        document
+          .getElementById("score")
+          .parentElement.classList.remove("hidden");
         showQuizQuestion();
       }
 
       function showQuizQuestion() {
-        if (quizIndex >= quizLetters.length) {
-          quizIndex = 0;
-          quizLetters.sort(() => Math.random() - 0.5);
+        // Clear any existing timeout
+        if (autoAdvanceTimeout) {
+          clearTimeout(autoAdvanceTimeout);
+          autoAdvanceTimeout = null;
         }
-        const current = quizLetters[quizIndex];
+
+        // Check if all letters have been answered
+        if (quizAnsweredLetters.length >= quizLetters.length) {
+          showQuizSummary();
+          return;
+        }
+
+        // Find next unanswered letter from shuffled list
+        let current = null;
+        while (quizIndex < quizLetters.length) {
+          const letter = quizLetters[quizIndex];
+          if (!quizAnsweredLetters.includes(letter.letter)) {
+            current = letter;
+            break;
+          }
+          quizIndex++;
+        }
+
+        // If we couldn't find an unanswered letter, show summary
+        if (!current) {
+          showQuizSummary();
+          return;
+        }
+
         document.getElementById("quiz-letter").textContent = current.letter;
         const allSounds = [
           ...new Set(
@@ -1924,26 +2049,134 @@
         document
           .querySelectorAll(".quiz-option")
           .forEach((btn) =>
-            btn.addEventListener("click", () => checkAnswer(btn, current.sound))
+            btn.addEventListener("click", () => checkAnswer(btn, current))
           );
       }
 
-      function checkAnswer(btn, correctSound) {
+      let autoAdvanceTimeout = null;
+
+      function checkAnswer(btn, currentLetter) {
+        // Clear any existing timeout
+        if (autoAdvanceTimeout) {
+          clearTimeout(autoAdvanceTimeout);
+        }
+
+        const correctSound = currentLetter.sound;
         totalAnswers++;
-        if (btn.dataset.sound === correctSound) correctAnswers++;
+        const isCorrect = btn.dataset.sound === correctSound;
+
+        if (isCorrect) {
+          correctAnswers++;
+        } else {
+          // Track incorrect answer
+          incorrectLetters.push({
+            letter: currentLetter.letter,
+            lower: currentLetter.lower,
+            sound: currentLetter.sound,
+            example: currentLetter.example,
+            word: currentLetter.word,
+            wordLatin: currentLetter.wordLatin,
+            wordMeaning: currentLetter.wordMeaning,
+          });
+        }
+
+        // Mark this letter as answered
+        if (!quizAnsweredLetters.includes(currentLetter.letter)) {
+          quizAnsweredLetters.push(currentLetter.letter);
+        }
+
+        // Disable all options and show feedback
         document.querySelectorAll(".quiz-option").forEach((b) => {
           b.disabled = true;
           if (b.dataset.sound === correctSound) b.classList.add("correct");
           else if (b === btn) b.classList.add("wrong");
         });
+
         document.getElementById(
           "score"
         ).textContent = `${correctAnswers}/${totalAnswers}`;
+
+        // Auto-advance after 2.5 seconds
+        autoAdvanceTimeout = setTimeout(() => {
+          quizIndex++;
+          showQuizQuestion();
+        }, 2500);
       }
 
-      document.getElementById("next-quiz-btn").addEventListener("click", () => {
-        quizIndex++;
-        showQuizQuestion();
+      function showQuizSummary() {
+        // Hide quiz question and options
+        document.getElementById("quiz-question").classList.add("hidden");
+        document.getElementById("quiz-options").classList.add("hidden");
+        document.getElementById("score").parentElement.classList.add("hidden");
+
+        // Show summary
+        document.getElementById("quiz-summary").classList.remove("hidden");
+        document.getElementById(
+          "summary-score"
+        ).textContent = `${correctAnswers}/${totalAnswers}`;
+
+        let summaryHTML = "";
+
+        if (incorrectLetters.length === 0) {
+          summaryHTML = `
+            <div class="score-display" style="background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); margin-bottom: 24px;">
+              <div style="font-size: 2rem; margin-bottom: 12px;">🎉 Perfect!</div>
+              <div style="color: var(--success); font-size: 1.1rem;">You got all answers correct!</div>
+            </div>
+          `;
+        } else {
+          summaryHTML = `
+            <div style="background: var(--card-bg); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+              <h3 style="color: var(--accent); margin-bottom: 16px; font-size: 1.2rem;">
+                Letters to Review (${incorrectLetters.length})
+              </h3>
+              <div style="display: grid; gap: 12px;">
+                ${incorrectLetters
+                  .map(
+                    (letter) => `
+                  <div style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 16px; border-left: 4px solid var(--error);">
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                      <div style="font-size: 2.5rem; font-weight: 700;">${letter.letter}</div>
+                      <div style="flex: 1;">
+                        <div style="font-size: 1.1rem; color: var(--accent); font-weight: 600;">"${letter.sound}"</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 4px;">${letter.example}</div>
+                      </div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                      <div style="font-size: 1.2rem; font-weight: 600; margin-bottom: 4px;">${letter.word}</div>
+                      <div style="font-size: 0.9rem; color: var(--text-muted);">${letter.wordLatin} = ${letter.wordMeaning}</div>
+                    </div>
+                  </div>
+                `
+                  )
+                  .join("")}
+              </div>
+            </div>
+          `;
+        }
+
+        document.getElementById("summary-content").innerHTML = summaryHTML;
+      }
+
+      document
+        .getElementById("restart-quiz-btn")
+        .addEventListener("click", () => {
+          resetQuiz();
+        });
+
+      document.getElementById("new-group-btn").addEventListener("click", () => {
+        // Reset and show first group
+        document
+          .querySelectorAll(".group-card[data-quiz]")
+          .forEach((c) => c.classList.remove("selected"));
+        const firstGroup = document.querySelector(
+          ".group-card[data-quiz][data-group='1']"
+        );
+        if (firstGroup) {
+          firstGroup.classList.add("selected");
+          quizGroup = "1";
+          resetQuiz();
+        }
       });
 
       // Reference
@@ -2095,6 +2328,7 @@
       updateFlashcard();
       updatePracticeWords();
       resetQuiz();
+      updateFlashcardFiltered();
     </script>
   </body>
 </html>
